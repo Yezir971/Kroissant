@@ -3,7 +3,7 @@
 [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
 [![Elysia](https://img.shields.io/badge/Elysia.js-%2310b981.svg?style=for-the-badge&logo=elysia&logoColor=white)](https://elysiajs.com)
 [![React](https://img.shields.io/badge/React-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361dafb)](https://react.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
 
 **Kroissant** est un réseau social moderne, axé sur la performance, la légèreté et le partage de contenus. Conçu sous forme de monorepo, il tire parti de la puissance de **Bun** comme runtime, d'**Elysia.js** pour une API Backend typée et performante, et de **React** pour une interface utilisateur fluide et réactive.
 
@@ -67,4 +67,4 @@ kroissant/
 │       │   └── pages/
 ├── packages/            # Configurations et types partagés
 └── package.json
-```# Kroissant
+```
