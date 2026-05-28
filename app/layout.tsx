@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
@@ -28,9 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="hover:text-primary cursor-pointer transition-colors">Favorites</span>
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-bold">
+            <Link className="bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-bold" href="/parent-dashboard">
               Parent Dashboard
-            </button>
+            </Link>
           </div>
         </nav>
         <div className="flex-grow">
