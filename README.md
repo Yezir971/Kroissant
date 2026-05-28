@@ -1,4 +1,4 @@
-# 🥐 Kroissant - Le Réseau Social Croustillant & Ultra-Rapide
+# 🥐 Kroissant - Réseau Social
 
 [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
 [![Elysia](https://img.shields.io/badge/Elysia.js-%2310b981.svg?style=for-the-badge&logo=elysia&logoColor=white)](https://elysiajs.com)
@@ -54,17 +54,23 @@ Le projet est structuré sous forme de **Monorepo** pour faciliter le partage de
 
 ```bash
 kroissant/
-├── apps/
-│   ├── api/             # Backend (Bun + Elysia.js)
-│   │   ├── src/
-│   │   │   ├── controllers/
-│   │   │   ├── models/
-│   │   │   └── index.ts
-│   └── web/             # Frontend (React)
-│       ├── src/
-│       │   ├── components/
-│       │   ├── hooks/
-│       │   └── pages/
-├── packages/            # Configurations et types partagés
-└── package.json
+src/
+├── app/                      # Routage et pages (App Router Next.js 14+)
+│   ├── layout.tsx            # Layout principal (Header, Navigation)
+│   ├── page.tsx              # Page d'accueil (Grille + Filtres)
+│   ├── onboarding/           # Fonctionnalité d'Onboarding
+│   │   └── page.tsx          # Création du profil enfant
+│   └── video/
+│       └── [id]/             # Routage dynamique
+│           └── page.tsx      # Page Détail (Résumé + Redirection externe)
+├── components/               # Composants UI (Dumb components)
+│   ├── ui/                   # Éléments de Design System (Boutons, Badges)
+│   └── feature/              # Composants métiers
+│       ├── VideoCard.tsx     # Composant d'affichage de la vidéo
+│       └── FilterBar.tsx     # Barre de filtres
+├── hooks/                    # Logique métier réutilisable (Smart logic)
+│   └── useFilters.ts         # Hook de gestion d'état des filtres
+├── types/                    # Définitions TypeScript
+│   └── index.ts              # Interfaces (ex: Video, Profile)
+└── utils/                    # Fonctions utilitaires pures (DRY)
 ```
