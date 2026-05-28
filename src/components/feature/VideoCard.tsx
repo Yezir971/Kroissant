@@ -1,15 +1,6 @@
+import { VideoProps } from '@/types';
 import Link from 'next/link';
 
-export interface VideoProps {
-  id: string;
-  titre: string;
-  description_courte: string;
-  age_minimum: number;
-  duree_minutes: number;
-  slow_score: number;
-  badge_cognitif: "Modéré" | "Stimulant";
-  plateforme: string;
-}
 
 export const VideoCard = ({ video }: { video: VideoProps }) => {
   const isModere = video.badge_cognitif === "Modéré";
