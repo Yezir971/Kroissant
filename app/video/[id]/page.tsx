@@ -2,8 +2,18 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { VIDEOS_DATA } from "@/src/data/videos";
 
-export default function VideoDetailPage({ params }: { params: { id: string } }) {
-  const video = VIDEOS_DATA.find((v) => v.id === params.id);
+// 1. Le composant devient asynchrone
+// 2. Le typage de params devient une Promise
+export default async function VideoDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
+  // 3. On "unwrap" la promesse pour récupérer l'ID
+  const { id } = await params;
+  
+  // 4. On utilise l'ID extrait
+  const video = VIDEOS_DATA.find((v) => v.id === id);
 
   if (!video) {
     notFound();
