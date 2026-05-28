@@ -1,17 +1,35 @@
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'inverted' | 'outlined';
+  size?: 'sm' | 'md' | 'lg';
 };
 
-export const Button = ({ children, variant = 'primary', className, ...props }: ButtonProps) => {
-  const base = "px-6 py-3 rounded-2xl font-bold transition-all active:scale-95";
-  const variants = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100",
-    secondary: "bg-slate-800 text-white hover:bg-slate-900",
-    outline: "border-2 border-slate-200 text-slate-600 hover:bg-slate-50"
+export const Button = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'md',
+  className = '', 
+  ...props 
+}: ButtonProps) => {
+  
+  // Mapping strict vers les classes DaisyUI
+  const variantClasses = {
+    primary: "btn-primary",
+    secondary: "btn-secondary",
+    inverted: "btn-neutral",
+    outlined: "btn-outline",
+  };
+
+  const sizeClasses = {
+    sm: "btn-sm",
+    md: "",
+    lg: "btn-lg",
   };
 
   return (
-    <button className={`${base} ${variants[variant]} ${className}`} {...props}>
+    <button 
+      className={`btn ${variantClasses[variant]} ${sizeClasses[size]} rounded-md font-bold ${className}`} 
+      {...props}
+    >
       {children}
     </button>
   );

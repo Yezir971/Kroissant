@@ -1,11 +1,9 @@
 "use client";
 
-import { VideoProps } from '@/types';
-import { useFilters } from '../hooks/useFilters';
-import { VideoCard } from '../src/components/feature/VideoCard';
+import { useFilters } from '@/hooks/useFilters';
+import { VideoCard } from '@/src/components/feature/VideoCard';
 import { VIDEOS_DATA } from '@/src/data/videos';
-
-
+import { VideoProps } from '@/types';
 
 export default function HomePage() {
   const { 
@@ -16,55 +14,50 @@ export default function HomePage() {
   } = useFilters<VideoProps>(VIDEOS_DATA, 'plateforme');
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6 md:p-12">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-10">
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-6">
-            Découvertes adaptées
-          </h1>
-          
-          {/* Barre de filtres (pourrait être extraite dans un composant FilterBar) */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setActiveFilter(null)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                activeFilter === null 
-                  ? 'bg-slate-800 text-white' 
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              Toutes
-            </button>
-            
-            {availableOptions.map((plateforme) => (
-              <button
-                key={plateforme}
-                onClick={() => setActiveFilter(plateforme)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                  activeFilter === plateforme 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                {plateforme}
-              </button>
-            ))}
-          </div>
-        </header>
+    <main className="max-w-[1140px] mx-auto p-6 md:p-8">
+      <header className="mb-12 max-w-2xl">
+        <h1 className="text-[32px] md:text-[48px] font-bold text-on-surface mb-4 leading-tight tracking-tight">
+          Découvertes Douces
+        </h1>
+        <p className="text-[16px] md:text-[18px] text-on-surface-variant font-medium leading-relaxed">
+          Une sélection de contenus apaisants, vérifiés pour leur rythme lent et leur faible impact cognitif.
+        </p>
+      </header>
 
-        {/* Grille de vidéos */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredData.map((video) => (
-            <VideoCard key={video.id} video={video} />
-          ))}
-        </section>
-
-        {filteredData.length === 0 && (
-          <div className="text-center py-20 text-slate-500">
-            Aucune vidéo trouvée pour ce filtre.
-          </div>
-        )}
+      {/* Barre de filtres (Chips) */}
+      <div className="flex flex-wrap gap-3 mb-10">
+        <button
+          onClick={() => setActiveFilter(null)}
+          className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+            activeFilter === null 
+              ? 'bg-primary text-on-primary' 
+              : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
+          }`}
+        >
+          Tous les contenus
+        </button>
+        
+        {availableOptions.map((plateforme) => (
+          <button
+            key={plateforme}
+            onClick={() => setActiveFilter(plateforme)}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+              activeFilter === plateforme 
+                ? 'bg-primary text-on-primary' 
+                : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
+            }`}
+          >
+            {plateforme}
+          </button>
+        ))}
       </div>
+
+      {/* Grille fluide de vidéos */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredData.map((video) => (
+          <VideoCard key={video.id} video={video} />
+        ))}
+      </section>
     </main>
   );
 }
