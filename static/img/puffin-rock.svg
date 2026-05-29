@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Puffin Rock">
+  <rect width="640" height="360" fill="#f8f1d0"/>
+  <circle cx="328" cy="172" r="126" fill="#f6c444"/>
+  <path d="M72 256c74-61 133-76 208-39 55 27 98 23 157-4 54-25 96-20 143 22v125H72z" fill="#85c6ad"/>
+  <ellipse cx="326" cy="176" rx="84" ry="96" fill="#25344f"/>
+  <ellipse cx="326" cy="202" rx="56" ry="65" fill="#fff"/>
+  <path d="M290 175c20-34 54-34 73 0-19 22-52 22-73 0z" fill="#f08035"/>
+  <circle cx="296" cy="147" r="13" fill="#fff"/>
+  <circle cx="357" cy="147" r="13" fill="#fff"/>
+  <circle cx="299" cy="150" r="6" fill="#1c2535"/>
+  <circle cx="354" cy="150" r="6" fill="#1c2535"/>
+  <path d="M242 101c22-39 49-55 82-54 35 1 67 22 90 61-55-19-110-21-172-7z" fill="#1f2c45"/>
+  <text x="117" y="315" fill="#25344f" font-family="Arial, sans-serif" font-size="58" font-weight="900">Puffin Rock</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Bluey">
+  <rect width="640" height="360" fill="#cfe7ff"/>
+  <rect y="232" width="640" height="128" fill="#7fc87a"/>
+  <rect x="32" y="130" width="150" height="120" rx="10" fill="#fff2cf"/>
+  <path d="M24 137 107 72l88 65z" fill="#e96d59"/>
+  <rect x="70" y="175" width="45" height="75" fill="#7bb4e8"/>
+  <circle cx="356" cy="178" r="82" fill="#447fbd"/>
+  <circle cx="464" cy="188" r="76" fill="#f0a04a"/>
+  <circle cx="333" cy="162" r="16" fill="#fff"/>
+  <circle cx="390" cy="162" r="16" fill="#fff"/>
+  <circle cx="443" cy="174" r="14" fill="#fff"/>
+  <circle cx="494" cy="174" r="14" fill="#fff"/>
+  <circle cx="337" cy="166" r="7" fill="#1d2b38"/>
+  <circle cx="386" cy="166" r="7" fill="#1d2b38"/>
+  <circle cx="447" cy="178" r="6" fill="#1d2b38"/>
+  <circle cx="490" cy="178" r="6" fill="#1d2b38"/>
+  <path d="M300 95 332 34l28 72M409 101l32-67 27 73" fill="#2d5f96"/>
+  <path d="M425 122 458 56l31 74M513 134l32-60 28 72" fill="#d77931"/>
+  <text x="40" y="318" fill="#1d2b38" font-family="Arial, sans-serif" font-size="46" font-weight="800">Bluey - Saison 1</text>
+</svg>

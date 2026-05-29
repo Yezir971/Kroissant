@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Le Petit Prince">
+  <rect width="640" height="360" fill="#fff9e6"/>
+  <circle cx="464" cy="118" r="52" fill="#f7cf4a"/>
+  <path d="M97 210c104-40 189-40 255 0 66 40 129 39 191-4v154H97z" fill="#dfeccf"/>
+  <circle cx="235" cy="116" r="38" fill="#ffd6a5"/>
+  <path d="M187 111c26-57 67-76 124-58-39 9-66 31-83 66-14-8-28-11-41-8z" fill="#f1c643"/>
+  <path d="M202 165h86l28 98H170z" fill="#7fcdb6"/>
+  <path d="M118 118c72 27 112 71 121 132" fill="none" stroke="#e4b235" stroke-width="16" stroke-linecap="round"/>
+  <path d="M420 242c18-70 49-83 92-38" fill="none" stroke="#6aab70" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="523" cy="192" r="18" fill="#f05b78"/>
+  <text x="57" y="315" fill="#7b6430" font-family="Arial, sans-serif" font-size="54" font-weight="900">Le Petit Prince</text>
+</svg>

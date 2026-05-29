@@ -1,0 +1,11 @@
+target
+data/*.sqlite
+data/*.sqlite-*
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+README.md
+*.log
+.env
+.DS_Store

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Ada Twist">
+  <rect width="640" height="360" fill="#e9f7ff"/>
+  <path d="M0 258c83-43 157-42 221 3 71 50 142 52 213 6 67-43 135-45 206-6v99H0z" fill="#bde4c8"/>
+  <circle cx="303" cy="158" r="72" fill="#8a5137"/>
+  <circle cx="303" cy="170" r="52" fill="#ffd1a6"/>
+  <path d="M234 141c17-78 69-111 156-99-28 22-43 55-44 99-35-14-72-14-112 0z" fill="#2e2d3f"/>
+  <circle cx="284" cy="163" r="8" fill="#1c2535"/>
+  <circle cx="326" cy="163" r="8" fill="#1c2535"/>
+  <rect x="222" y="223" width="160" height="57" rx="18" fill="#ffffff"/>
+  <path d="M472 94v122M421 216h102" stroke="#4c8bd6" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="472" cy="78" r="24" fill="#f7c948"/>
+  <text x="73" y="315" fill="#31445f" font-family="Arial, sans-serif" font-size="52" font-weight="900">Ada Twist</text>
+</svg>

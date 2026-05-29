@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Baymax">
+  <rect width="640" height="360" fill="#e8f5f7"/>
+  <circle cx="320" cy="164" r="96" fill="#ffffff"/>
+  <rect x="210" y="196" width="220" height="92" rx="46" fill="#ffffff"/>
+  <circle cx="280" cy="158" r="11" fill="#1c2535"/>
+  <circle cx="361" cy="158" r="11" fill="#1c2535"/>
+  <path d="M291 158h58" stroke="#1c2535" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="483" cy="124" r="52" fill="#f7c948"/>
+  <path d="M468 124h30M483 109v30" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M0 270c80-39 157-39 231 0s146 39 217 0 135-39 192-3v93H0z" fill="#cbe6ec"/>
+  <text x="178" y="318" fill="#4c6270" font-family="Arial, sans-serif" font-size="62" font-weight="900">Baymax!</text>
+</svg>

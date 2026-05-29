@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Sarah and Duck">
+  <rect width="640" height="360" fill="#e6f4e4"/>
+  <rect x="0" y="255" width="640" height="105" fill="#b7dba5"/>
+  <circle cx="210" cy="161" r="55" fill="#ffe0c6"/>
+  <path d="M155 143c18-61 57-84 118-68 30 8 54 28 72 60-60-20-124-17-190 8z" fill="#704833"/>
+  <circle cx="195" cy="153" r="9" fill="#1d2b38"/>
+  <circle cx="234" cy="153" r="9" fill="#1d2b38"/>
+  <rect x="157" y="219" width="112" height="58" rx="16" fill="#e06087"/>
+  <ellipse cx="432" cy="206" rx="72" ry="54" fill="#a9dc8f"/>
+  <circle cx="488" cy="154" r="46" fill="#85ca6d"/>
+  <circle cx="474" cy="145" r="10" fill="#fff"/>
+  <circle cx="501" cy="145" r="10" fill="#fff"/>
+  <path d="M515 160h58l-48 26z" fill="#e1a944"/>
+  <text x="64" y="315" fill="#395935" font-family="Arial, sans-serif" font-size="54" font-weight="900">Sarah &amp; Duck</text>
+</svg>

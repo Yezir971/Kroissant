@@ -1,0 +1,21 @@
+services:
+  kroissant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kroissant:dev
+    container_name: kroissant-dev
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: sqlite://data/kroissant.sqlite
+      JWT_SECRET: change-me-for-local-compose
+      RUST_LOG: info
+    ports:
+      - "3000:3000"
+    volumes:
+      - kroissant-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  kroissant-data:
