@@ -1,5 +1,4 @@
 import { VIDEOS_DATA } from "@/src/data/videos";
-import { notFound } from "next/navigation";
 
 export default async function VideoDetailPage({ 
   params 
@@ -9,7 +8,6 @@ export default async function VideoDetailPage({
   const { id } = await params;
   const video = VIDEOS_DATA.find((v) => v.id === id);
 
-  if (!video) notFound();
 
   return (
     <main className="max-w-[1140px] mx-auto p-6 md:p-8">
@@ -27,28 +25,28 @@ export default async function VideoDetailPage({
         {/* Informations et Actions (Droite) */}
         <div className="w-full lg:w-[40%] flex flex-col pt-4">
           <h1 className="text-[32px] md:text-[48px] font-bold text-on-surface leading-tight mb-4">
-            {video.titre}
+            {video?.titre}
           </h1>
           
           <p className="text-[16px] text-on-surface-variant leading-relaxed font-medium mb-8">
-            {video.description_courte} Une histoire conçue pour apaiser et préparer au calme, sans transitions brusques ni bruits forts.
+            {video?.description_courte} Une histoire conçue pour apaiser et préparer au calme, sans transitions brusques ni bruits forts.
           </p>
 
           {/* Badges de score (Pillules bleues) */}
           <div className="flex gap-4 mb-10">
             <div className="bg-secondary-container px-4 py-2 rounded-full flex flex-col">
               <span className="text-[10px] uppercase font-bold text-on-secondary-container/70 tracking-wider">Slow Score</span>
-              <span className="text-on-secondary-container font-bold">{video.slow_score}/10</span>
+              <span className="text-on-secondary-container font-bold">{video?.slow_score}/10</span>
             </div>
             <div className="bg-secondary-container px-4 py-2 rounded-full flex flex-col">
               <span className="text-[10px] uppercase font-bold text-on-secondary-container/70 tracking-wider">Impact Cognitif</span>
-              <span className="text-on-secondary-container font-bold capitalize">{video.badge_cognitif}</span>
+              <span className="text-on-secondary-container font-bold capitalize">{video?.badge_cognitif}</span>
             </div>
           </div>
 
           {/* Call to Action principal */}
           <a
-            href={video.url_externe}
+            href={video?.url_externe}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full bg-primary text-on-primary text-center py-4 rounded-xl font-bold text-[18px] hover:bg-on-primary-container transition-colors shadow-sm"

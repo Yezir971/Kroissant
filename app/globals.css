@@ -1,8 +1,10 @@
+/* globals.css — KidVids Design System */
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: kidvids --default;
+  themes: kidvids --default, kidvids-dark;
 }
 
+/* ── Thème Light ───────────────────────────── */
 @plugin "daisyui/theme" {
   name: "kidvids";
   default: true;
@@ -19,31 +21,50 @@
   --color-base-200: #f4ede7;
   --color-base-300: #eee7e2;
   --color-base-content: #1e1b18;
-
-  --rounded-box: 1rem;
+  --rounded-box: 1.5rem;
   --rounded-btn: 0.5rem;
+  --rounded-badge: 9999px;
 }
 
-@theme {
-  --font-sans: var(--font-quicksand), sans-serif;
+/* ── Thème Dark ────────────────────────────── */
+@plugin "daisyui/theme" {
+  name: "kidvids-dark";
 
-  /* Couleurs utilitaires custom (Material You) */
+  --color-primary: #ffb38a;
+  --color-primary-content: #4a2600;
+  --color-secondary: #7ec8ff;
+  --color-secondary-content: #003351;
+  --color-accent: #5c3a22;
+  --color-accent-content: #ffb38a;
+  --color-neutral: #a39189;
+  --color-neutral-content: #1e1b18;
+  --color-base-100: #1e1b18;
+  --color-base-200: #272320;
+  --color-base-300: #322d2a;
+  --color-base-content: #ede0d4;
+  --rounded-box: 1.5rem;
+  --rounded-btn: 0.5rem;
+  --rounded-badge: 9999px;
+}
+
+/* ── Tokens custom (Material You) ──────────── */
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Gilroy', 'DM Sans', sans-serif;
+
   --color-surface: #fff8f3;
   --color-surface-dim: #dfd9d4;
   --color-surface-container: #f4ede7;
   --color-surface-container-high: #eee7e2;
   --color-on-surface: #1e1b18;
   --color-on-surface-variant: #52443c;
-  --color-on-primary: #ffffff;
   --color-primary-container: #ffb38a;
   --color-on-primary-container: #794323;
-  --color-on-secondary: #ffffff;
   --color-secondary-container: #a1d1fe;
   --color-on-secondary-container: #265a81;
 
-  /* Border radius */
   --radius-sm: 0.25rem;
-  --radius-md: 0.75rem;
+  --radius-md: 0.5rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
 }
