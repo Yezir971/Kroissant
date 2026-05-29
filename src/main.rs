@@ -494,7 +494,7 @@ async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Ht
         r#"
         <section class="hero">
             <div class="hero-inner">
-                <h1>Des dessins animes<br>qui developpent vraiment<br>votre enfant.</h1>
+                <h1>Des dessins animés choisis pour eux. Une sérénité retrouvée pour vous.</h1>
                 <p>Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
                 <div class="hero-actions">
                     <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
