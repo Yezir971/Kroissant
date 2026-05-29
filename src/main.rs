@@ -92,6 +92,7 @@ struct Claims {
 #[derive(Debug, Deserialize)]
 struct PlatformQuery {
     platform: Option<String>,
+    tag: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -113,6 +114,23 @@ struct Benefit {
     summary: &'static str,
     detail: &'static str,
     source: &'static str,
+}
+
+#[derive(Debug, Clone, FromRow)]
+struct TaggedSeries {
+    id: i64,
+    tmdb_id: i64,
+    name: String,
+    overview: String,
+    first_air_date: Option<String>,
+    poster_path: Option<String>,
+    platform: String,
+    age_range: String,
+    episode_context_count: i64,
+    llm_reason: String,
+    confidence: Option<f64>,
+    source_url: String,
+    tags: Option<String>,
 }
 
 #[tokio::main]
@@ -225,6 +243,56 @@ async fn migrate(pool: &SqlitePool) -> Result<()> {
             watched_at TEXT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS tmdb_series (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tmdb_id INTEGER NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            original_name TEXT NOT NULL DEFAULT '',
+            overview TEXT NOT NULL DEFAULT '',
+            first_air_date TEXT,
+            poster_path TEXT,
+            platform TEXT NOT NULL DEFAULT '',
+            age_range TEXT NOT NULL DEFAULT '',
+            episode_context_count INTEGER NOT NULL DEFAULT 0,
+            llm_reason TEXT NOT NULL DEFAULT '',
+            confidence REAL,
+            source_url TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS tmdb_episodes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            series_id INTEGER NOT NULL,
+            tmdb_episode_id INTEGER,
+            season_number INTEGER NOT NULL,
+            episode_number INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            overview TEXT NOT NULL DEFAULT '',
+            air_date TEXT,
+            runtime INTEGER,
+            still_path TEXT,
+            updated_at TEXT NOT NULL,
+            UNIQUE(series_id, season_number, episode_number),
+            FOREIGN KEY (series_id) REFERENCES tmdb_series(id) ON DELETE CASCADE
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS tmdb_series_tags (
+            series_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (series_id, tag_id),
+            FOREIGN KEY (series_id) REFERENCES tmdb_series(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
         )
         "#,
     ];
@@ -494,12 +562,15 @@ async fn library(
 ) -> AppResult<Html<String>> {
     let user = current_user(&state, &headers).await;
     let active = normalize_platform_or_all(query.platform.as_deref());
+    let active_tag = normalize_tag(query.tag.as_deref());
     let contents = get_contents(
         &state.pool,
         if active == "all" { None } else { Some(active) },
         None,
     )
     .await?;
+    let tags = available_tags(&state.pool).await?;
+    let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
     let body = format!(
         r#"
         <main class="library-shell">
@@ -508,7 +579,7 @@ async fn library(
             </section>
         </main>
         "#,
-        render_library_section(active, &contents)
+        render_library_section(active, &contents, active_tag.as_deref(), &tags, &series)
     );
 
     Ok(Html(render_page(
@@ -525,13 +596,22 @@ async fn library_partial(
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
     let active = normalize_platform_or_all(query.platform.as_deref());
+    let active_tag = normalize_tag(query.tag.as_deref());
     let contents = get_contents(
         &state.pool,
         if active == "all" { None } else { Some(active) },
         None,
     )
     .await?;
-    Ok(Html(render_library_section(active, &contents)))
+    let tags = available_tags(&state.pool).await?;
+    let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
+    Ok(Html(render_library_section(
+        active,
+        &contents,
+        active_tag.as_deref(),
+        &tags,
+        &series,
+    )))
 }
 
 async fn content_detail(
@@ -693,13 +773,13 @@ async fn go_to_source(
 async fn science(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Html<String>> {
     let user = current_user(&state, &headers).await;
     let mut cards = String::new();
-    for benefit in benefits() {
+    for benefit in benefits().into_iter().take(4) {
         cards.push_str(&format!(
             r#"
             <article class="science-card">
                 <span class="pill {}">{}</span>
                 <p>{}</p>
-                <small>Source: {}</small>
+                <small>Source : {}</small>
             </article>
             "#,
             h(benefit.key),
@@ -717,23 +797,24 @@ async fn science(State(state): State<AppState>, headers: HeaderMap) -> AppResult
         </section>
         <main class="science-flow">
             {}
-            <div class="warning-box">
+            <div class="science-warning">
                 <strong>54% des parents pensent que leur enfant est accro aux ecrans.</strong>
-                <span>Certains dessins animes developpent les competences que vous cherchez a cultiver - sans activite structuree.</span>
+                <span>Certains dessins animes developpent les competences que vous cherchez a cultiver sans activite structuree.</span>
             </div>
-            <a class="button button-primary full-width" href="/inscription?next=/bibliotheque">Je fais confiance a cette selection - S'inscrire gratuitement</a>
+            <a class="button button-primary full-width science-cta" href="/inscription?next=/bibliotheque">S'inscrire gratuitement</a>
             <p class="source-note centered">Sources completees: Lurie Children's Hospital 2025 · INSERM · Arcom · LeadingTree 2023</p>
         </main>
         "#,
         cards
     );
 
-    Ok(Html(render_page(
+    Ok(Html(render_page_with_class(
         "Selection scientifique - Kroissant",
         "Accueil",
         Some("/"),
         &user,
         body,
+        "science-page",
     )))
 }
 
@@ -1039,6 +1120,89 @@ async fn history_contents(pool: &SqlitePool, user_id: i64) -> Result<Vec<Content
     .await?)
 }
 
+async fn available_tags(pool: &SqlitePool) -> Result<Vec<String>> {
+    let rows: Vec<(String,)> = sqlx::query_as(
+        r#"
+        SELECT t.name
+        FROM tags t
+        INNER JOIN tmdb_series_tags st ON st.tag_id = t.id
+        GROUP BY t.id, t.name
+        ORDER BY t.name
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows.into_iter().map(|row| row.0).collect())
+}
+
+async fn tagged_series(pool: &SqlitePool, tag: Option<&str>) -> Result<Vec<TaggedSeries>> {
+    let rows = match tag {
+        Some(tag) => {
+            sqlx::query_as::<_, TaggedSeries>(
+                r#"
+                SELECT
+                    s.id,
+                    s.tmdb_id,
+                    s.name,
+                    s.overview,
+                    s.first_air_date,
+                    s.poster_path,
+                    s.platform,
+                    s.age_range,
+                    s.episode_context_count,
+                    s.llm_reason,
+                    s.confidence,
+                    s.source_url,
+                    GROUP_CONCAT(t.name, ',') AS tags
+                FROM tmdb_series s
+                INNER JOIN tmdb_series_tags selected_st ON selected_st.series_id = s.id
+                INNER JOIN tags selected_t ON selected_t.id = selected_st.tag_id
+                LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
+                LEFT JOIN tags t ON t.id = st.tag_id
+                WHERE selected_t.name = ?
+                GROUP BY s.id
+                ORDER BY s.name
+                LIMIT 100
+                "#,
+            )
+            .bind(tag)
+            .fetch_all(pool)
+            .await?
+        }
+        None => {
+            sqlx::query_as::<_, TaggedSeries>(
+                r#"
+                SELECT
+                    s.id,
+                    s.tmdb_id,
+                    s.name,
+                    s.overview,
+                    s.first_air_date,
+                    s.poster_path,
+                    s.platform,
+                    s.age_range,
+                    s.episode_context_count,
+                    s.llm_reason,
+                    s.confidence,
+                    s.source_url,
+                    GROUP_CONCAT(t.name, ',') AS tags
+                FROM tmdb_series s
+                LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
+                LEFT JOIN tags t ON t.id = st.tag_id
+                GROUP BY s.id
+                ORDER BY s.name
+                LIMIT 100
+                "#,
+            )
+            .fetch_all(pool)
+            .await?
+        }
+    };
+
+    Ok(rows)
+}
+
 async fn current_user(state: &AppState, headers: &HeaderMap) -> Option<User> {
     let token = cookie_value(headers, AUTH_COOKIE)?;
     let claims = decode::<Claims>(
@@ -1143,6 +1307,12 @@ fn normalize_platform_or_all(platform: Option<&str>) -> &str {
     }
 }
 
+fn normalize_tag(tag: Option<&str>) -> Option<String> {
+    tag.map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(|value| value.to_lowercase())
+}
+
 fn platform_label(platform: &str) -> &'static str {
     match platform {
         "youtube" => "YouTube",
@@ -1159,21 +1329,21 @@ fn benefits() -> Vec<Benefit> {
             label: "Resilience",
             summary: "Apprendre a surmonter les obstacles en maintenant l'effort.",
             detail: "Capacite a surmonter les obstacles. Modelisee par les personnages via l'echec, la perseverance et la recuperation emotionnelle.",
-            source: "Analyse 160 episodes Bluey - Tandfonline, 2025",
+            source: "Analyse 150 episodes Bluey / Tandfonline, 2025",
         },
         Benefit {
             key: "empathie",
             label: "Empathie",
             summary: "Comprendre le point de vue de l'autre dans des situations simples.",
             detail: "Comprehension du point de vue de l'autre. Les contenus mettent en scene des situations ou le personnage doit se mettre a la place d'autrui.",
-            source: "Pritchard et al., 2024 - Impact of cartoons on childhood development",
+            source: "Prithviraj et al., 2024 / Impact of cartoons on childhood development",
         },
         Benefit {
             key: "language",
             label: "Developpement du langage",
             summary: "Nommer, raconter et reformuler ce qui vient d'etre vu.",
             detail: "Vocabulaire, narration, comprehension orale. Les programmes educatifs favorisent activement ces dimensions.",
-            source: "Cohorte EFe / INSERM 2023 - Etude longitudinale sur 14 000 enfants francais",
+            source: "Cohorte Elfe / INSERM, 2023 / Etude longitudinale sur 14 000 enfants francais",
         },
         Benefit {
             key: "regulation",
@@ -1219,6 +1389,17 @@ fn render_page(
     user: &Option<User>,
     body: String,
 ) -> String {
+    render_page_with_class(title, left_label, back_href, user, body, "")
+}
+
+fn render_page_with_class(
+    title: &str,
+    left_label: &str,
+    back_href: Option<&str>,
+    user: &Option<User>,
+    body: String,
+    page_class: &str,
+) -> String {
     let left = match back_href {
         Some(href) => format!(
             r#"<a class="back-link" href="{}">← {}</a>"#,
@@ -1253,16 +1434,22 @@ fn render_page(
             <link rel="stylesheet" href="/static/app.css">
             <script src="/static/htmx.min.js" defer></script>
         </head>
-        <body>
+        <body class="{}">
             <header class="topbar">
                 <div class="topbar-left">{}</div>
                 <a class="brand" href="/">Kroissant</a>
                 <nav class="topbar-nav">{}</nav>
             </header>
             {}
+            <footer class="site-footer">
+                <a class="footer-brand" href="/">Kroissant</a>
+                <p>© 2026 Kroissant - Tous droits reserves.</p>
+                <a class="footer-link" href="/science">Comment sont choisis nos contenus</a>
+            </footer>
         </body>
         </html>"#,
         h(title),
+        a(page_class),
         left,
         nav,
         body
@@ -1359,8 +1546,11 @@ fn render_home_platform_section(active: &str, contents: &[Content]) -> String {
     )
 }
 
-fn render_library_tabs(active: &str) -> String {
+fn render_library_tabs(active: &str, active_tag: Option<&str>) -> String {
     let mut tabs = String::from(r#"<div class="platform-tabs library-tabs">"#);
+    let tag_suffix = active_tag
+        .map(|tag| format!("&tag={}", a(tag)))
+        .unwrap_or_default();
     for (key, label) in [
         ("youtube", "YouTube"),
         ("netflix", "Netflix"),
@@ -1371,15 +1561,17 @@ fn render_library_tabs(active: &str) -> String {
             r##"
             <button
                 class="platform-tab {}"
-                hx-get="/partials/library?platform={}"
+                hx-get="/partials/library?platform={}{}"
                 hx-target="#library-section"
                 hx-swap="innerHTML"
-                hx-push-url="/bibliotheque?platform={}"
+                hx-push-url="/bibliotheque?platform={}{}"
                 type="button">{}</button>
             "##,
             if active == key { "active" } else { "" },
             key,
+            tag_suffix,
             key,
+            tag_suffix,
             label
         ));
     }
@@ -1387,7 +1579,13 @@ fn render_library_tabs(active: &str) -> String {
     tabs
 }
 
-fn render_library_section(active: &str, contents: &[Content]) -> String {
+fn render_library_section(
+    active: &str,
+    contents: &[Content],
+    active_tag: Option<&str>,
+    tags: &[String],
+    series: &[TaggedSeries],
+) -> String {
     format!(
         r#"
         {}
@@ -1398,11 +1596,68 @@ fn render_library_section(active: &str, contents: &[Content]) -> String {
         <div id="library-results" class="card-grid library-grid">
             {}
         </div>
+        <section class="section-block tagged-series-block">
+            <div class="section-heading">
+                <h2>Series categorisees par IA</h2>
+                <p>Les tags sont calcules au niveau serie avec un contexte limite aux episodes choisis dans le JSON.</p>
+            </div>
+            {}
+            <div class="card-grid library-grid ai-series-grid">
+                {}
+            </div>
+        </section>
         "#,
-        render_library_tabs(active),
+        render_library_tabs(active, active_tag),
         contents.len(),
         h(platform_label(active)),
-        render_cards(contents)
+        render_cards(contents),
+        render_tag_search(active, active_tag, tags),
+        render_tagged_series_or_empty(series, active_tag),
+    )
+}
+
+fn render_tag_search(active_platform: &str, active_tag: Option<&str>, tags: &[String]) -> String {
+    let value = active_tag.unwrap_or("");
+    let clear_href = format!("/bibliotheque?platform={}", a(active_platform));
+    let mut chips = String::new();
+
+    for tag in tags {
+        let href = format!(
+            "/bibliotheque?platform={}&tag={}",
+            a(active_platform),
+            a(tag)
+        );
+        chips.push_str(&format!(
+            r#"<a class="tag-chip {}" href="{}">{}</a>"#,
+            if active_tag == Some(tag.as_str()) {
+                "active"
+            } else {
+                ""
+            },
+            href,
+            h(tag)
+        ));
+    }
+
+    format!(
+        r#"
+        <form class="tag-search-form" method="get" action="/bibliotheque">
+            <input type="hidden" name="platform" value="{}">
+            <label for="tag-search">Chercher par tag</label>
+            <div>
+                <input id="tag-search" name="tag" value="{}" placeholder="empathie, science, resilience...">
+                <button class="button button-secondary" type="submit">Chercher</button>
+                <a class="button button-light" href="{}">Effacer</a>
+            </div>
+        </form>
+        <div class="tag-chip-row">
+            {}
+        </div>
+        "#,
+        a(active_platform),
+        a(value),
+        clear_href,
+        chips
     )
 }
 
@@ -1419,6 +1674,96 @@ fn render_cards_or_empty(contents: &[Content], empty: &str) -> String {
         format!(r#"<p class="empty-state">{}</p>"#, h(empty))
     } else {
         render_cards(contents)
+    }
+}
+
+fn render_tagged_series_or_empty(series: &[TaggedSeries], active_tag: Option<&str>) -> String {
+    if series.is_empty() {
+        let message = match active_tag {
+            Some(tag) => format!("Aucune serie categorisee avec le tag \"{}\".", h(tag)),
+            None => "Aucune serie categorisee pour l'instant. Lancez le script TMDb/Ollama pour alimenter cette section.".to_string(),
+        };
+        format!(r#"<p class="empty-state">{}</p>"#, message)
+    } else {
+        series
+            .iter()
+            .map(render_tagged_series_card)
+            .collect::<Vec<_>>()
+            .join("")
+    }
+}
+
+fn render_tagged_series_card(series: &TaggedSeries) -> String {
+    let poster = series
+        .poster_path
+        .as_ref()
+        .map(|path| tmdb_image_url(path))
+        .unwrap_or_else(|| "/static/img/storybots.svg".to_string());
+    let tags = series
+        .tags
+        .as_deref()
+        .unwrap_or("")
+        .split(',')
+        .filter(|tag| !tag.trim().is_empty())
+        .map(|tag| format!(r#"<span class="tag-pill">{}</span>"#, h(tag.trim())))
+        .collect::<Vec<_>>()
+        .join("");
+    let platform = if series.platform.trim().is_empty() {
+        "Plateforme a definir".to_string()
+    } else {
+        platform_label(&series.platform).to_string()
+    };
+    let age = if series.age_range.trim().is_empty() {
+        "Age a definir"
+    } else {
+        &series.age_range
+    };
+    let confidence = series
+        .confidence
+        .map(|value| format!(" · confiance {:.0}%", value * 100.0))
+        .unwrap_or_default();
+    let first_air_date = series.first_air_date.as_deref().unwrap_or("date inconnue");
+
+    format!(
+        r#"
+        <article class="content-card ai-series-card" data-series-id="{}">
+            <a class="thumb-link" href="{}" target="_blank" rel="noreferrer">
+                <img src="{}" alt="">
+            </a>
+            <div class="card-body">
+                <h3><a href="{}" target="_blank" rel="noreferrer">{}</a></h3>
+                <p>{} · {} · {}</p>
+                <p>{} episode(s) utilises comme contexte{}</p>
+                <p>{}</p>
+                <div class="tag-list">{}</div>
+                <small>TMDb {} · {}</small>
+            </div>
+        </article>
+        "#,
+        series.id,
+        a(&series.source_url),
+        a(&poster),
+        a(&series.source_url),
+        h(&series.name),
+        h(&platform),
+        h(age),
+        h(first_air_date),
+        series.episode_context_count,
+        h(&confidence),
+        h(&series.overview),
+        tags,
+        series.tmdb_id,
+        h(&series.llm_reason),
+    )
+}
+
+fn tmdb_image_url(path: &str) -> String {
+    if path.starts_with("http://") || path.starts_with("https://") || path.starts_with("/static/") {
+        path.to_string()
+    } else if path.starts_with('/') {
+        format!("https://image.tmdb.org/t/p/w500{path}")
+    } else {
+        format!("https://image.tmdb.org/t/p/w500/{path}")
     }
 }
 

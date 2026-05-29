@@ -157,6 +157,41 @@ Nettoyer les comptes de test sans supprimer les contenus :
 sqlite3 data/kroissant.sqlite "DELETE FROM saved_items; DELETE FROM watch_history; DELETE FROM users;"
 ```
 
+## Categorisation TMDb + Ollama
+
+Le script `scripts/categorize_tmdb_series.py` recupere les metadonnees TMDb, limite le contexte aux `episodes` demandes dans le JSON, appelle Ollama en local, puis stocke les tags au niveau serie.
+
+Prerequis :
+
+- `TMDB_BEARER_TOKEN` ou `TMDB_API_KEY`
+- Ollama lance localement, par exemple `ollama serve`
+- un modele disponible, par exemple `ollama pull llama3.1`
+
+Chercher le bon identifiant TMDb :
+
+```bash
+TMDB_BEARER_TOKEN=... \
+scripts/categorize_tmdb_series.py --search "Bluey"
+```
+
+Categoriser les series configurees :
+
+```bash
+TMDB_BEARER_TOKEN=... \
+OLLAMA_MODEL=llama3.1 \
+scripts/categorize_tmdb_series.py --config scripts/tmdb_categories.example.json
+```
+
+Le JSON contient :
+
+- `categories` : tags autorises envoyes au system prompt ;
+- `series[].tmdb_id` : identifiant TMDb trouve avec `--search` ;
+- `series[].episodes` : nombre maximum d'episodes envoyes au LLM comme contexte ;
+- `series[].season`, `start_season`, `start_episode` : bornes optionnelles du contexte ;
+- `platform` et `age_range` : affichage dans le front.
+
+Le script affiche une petite UI terminal en temps reel : serie courante, recuperation TMDb, nombre d'episodes gardes, appel Ollama, tags retenus et ecriture SQLite.
+
 ## Arborescence
 
 ```text
@@ -330,6 +365,35 @@ Les suppressions utilisateur ou contenu suppriment les favoris associes via `ON 
 | `user_id` | `INTEGER` | Foreign key vers `users(id)` |
 | `content_id` | `INTEGER` | Foreign key vers `contents(id)` |
 | `watched_at` | `TEXT` | ISO/RFC3339, not null |
+
+### `tmdb_series`
+
+Series importees depuis TMDb et categorisees par Ollama.
+
+| Colonne | Type | Contrainte |
+| --- | --- | --- |
+| `id` | `INTEGER` | Primary key autoincrement |
+| `tmdb_id` | `INTEGER` | Unique, not null |
+| `name` | `TEXT` | Not null |
+| `original_name` | `TEXT` | Not null |
+| `overview` | `TEXT` | Not null |
+| `first_air_date` | `TEXT` | Nullable |
+| `poster_path` | `TEXT` | Nullable |
+| `platform` | `TEXT` | Affichage front |
+| `age_range` | `TEXT` | Affichage front |
+| `episode_context_count` | `INTEGER` | Nombre d'episodes fournis au LLM |
+| `llm_reason` | `TEXT` | Justification courte de la categorisation |
+| `confidence` | `REAL` | Score 0-1 retourne par le LLM |
+| `source_url` | `TEXT` | URL TMDb |
+| `updated_at` | `TEXT` | ISO/RFC3339, not null |
+
+### `tmdb_episodes`
+
+Episodes stockes comme contexte/audit. Les tags ne sont pas associes aux episodes.
+
+### `tags` et `tmdb_series_tags`
+
+`tags` contient les libelles normalises. `tmdb_series_tags` relie les tags aux series TMDb.
 
 ## Seed de donnees
 

@@ -1,0 +1,39 @@
+{
+  "tmdb_language": "fr-FR",
+  "ollama_url": "http://localhost:11434",
+  "ollama_model": "llama3.1",
+  "categories": [
+    "resilience",
+    "empathie",
+    "langage",
+    "regulation emotionnelle",
+    "creativite",
+    "science"
+  ],
+  "series": [
+    {
+      "tmdb_id": 82728,
+      "name": "Bluey",
+      "episodes": 8,
+      "season": 1,
+      "platform": "disney",
+      "age_range": "3-7 ans"
+    },
+    {
+      "tmdb_id": 82456,
+      "name": "Hilda",
+      "episodes": 6,
+      "season": 1,
+      "platform": "netflix",
+      "age_range": "6-10 ans"
+    },
+    {
+      "tmdb_id": 15260,
+      "name": "Adventure Time",
+      "episodes": 10,
+      "season": 1,
+      "platform": "youtube",
+      "age_range": "7-12 ans"
+    }
+  ]
+}
