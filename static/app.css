@@ -6,13 +6,29 @@
   --line: #e8ded3;
   --brand: #d06b12;
   --brand-dark: #ac6842;
+  --hero: #c55f0a;
   --brand-deep: #8d4c2d;
+  --dark-brown: #4e301e;
   --peach: #ffe3d2;
   --green: #dfeee0;
   --blue: #dee9ff;
   --pink: #ffe1ee;
   --yellow: #fff0c6;
   --shadow: 0 12px 28px rgba(53, 39, 27, 0.12);
+  --font-title: "Gilroy ExtraBold", "Gilroy-ExtraBold", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Gilroy Light", "GilroyLight", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+@font-face {
+  font-family: "Gilroy ExtraBold";
+  src: local("Gilroy ExtraBold"), local("Gilroy-ExtraBold");
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: "Gilroy Light";
+  src: local("Gilroy Light"), local("Gilroy-Light"), local("GilroyLight");
+  font-weight: 300;
 }
 
 * {
@@ -23,7 +39,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
 }
@@ -58,6 +74,7 @@ input {
 
 .brand {
   color: #ef9f41;
+  font-family: var(--font-title);
   font-weight: 900;
   font-size: 1.05rem;
 }
@@ -102,6 +119,7 @@ input {
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
+  font-family: var(--font-title);
   font-weight: 800;
   font-size: 0.92rem;
   white-space: nowrap;
@@ -156,14 +174,14 @@ input {
 .hero,
 .detail-hero,
 .science-hero {
-  background: var(--brand-dark);
+  background: var(--hero);
   color: white;
 }
 
 .hero-inner {
-  width: min(1080px, 100%);
+  width: min(1080px, calc(100% - 10vw));
   margin: 0 auto;
-  padding: 72px 5vw 82px;
+  padding: 72px 0 82px;
 }
 
 .hero h1,
@@ -171,6 +189,7 @@ input {
 .science-hero h1,
 .account-header h1 {
   margin: 0;
+  font-family: var(--font-title);
   font-size: 2.35rem;
   line-height: 1.08;
 }
@@ -218,6 +237,7 @@ input {
 .section-heading h2,
 .how-it-works h2 {
   margin: 0;
+  font-family: var(--font-title);
   font-size: 1.28rem;
   line-height: 1.2;
 }
@@ -245,8 +265,17 @@ input {
 .platform-tabs {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 14px;
   margin: 18px 0 22px;
+}
+
+.home-tabs {
+  width: 100%;
+}
+
+.home-see-all {
+  margin-left: auto;
 }
 
 .platform-tab {
@@ -285,6 +314,7 @@ input {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
+  color: var(--dark-brown);
 }
 
 .thumb-link {
@@ -345,12 +375,13 @@ input {
 
 .card-body {
   display: grid;
-  gap: 9px;
+  gap: 10px;
   padding: 14px;
 }
 
 .card-body h3 {
   margin: 0;
+  font-family: var(--font-title);
   font-size: 1rem;
   line-height: 1.25;
 }
@@ -375,15 +406,16 @@ input {
 .stat-band {
   display: flex;
   justify-content: center;
-  gap: 56px;
-  padding: 23px 5vw;
+  gap: 76px;
+  padding: 26px 5vw;
   background: var(--brand-dark);
   color: white;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
-.stat-band strong {
-  font-weight: 900;
+.stat-band span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .how-it-works {
@@ -493,31 +525,60 @@ input {
 }
 
 .detail-hero {
-  padding: 54px 5vw 48px;
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  padding: 0;
+  background: #1e1a17;
 }
 
-.detail-hero > div {
-  width: min(1080px, 100%);
+.detail-hero-bg {
+  position: absolute;
+  inset: -12px;
+  width: calc(100% + 24px);
+  height: calc(100% + 24px);
+  object-fit: cover;
+  filter: blur(4px);
+  transform: scale(1.02);
+}
+
+.detail-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.detail-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 420px;
+  width: min(1080px, calc(100% - 10vw));
+  flex-direction: column;
+  justify-content: center;
   margin: 0 auto;
 }
 
 .eyebrow {
-  margin: 0 0 10px;
-  color: rgba(255, 255, 255, 0.82);
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 1.05rem;
 }
 
 .detail-description {
-  max-width: 720px;
-  margin: 18px 0 20px;
+  max-width: 650px;
+  margin: 28px 0 0;
   color: rgba(255, 255, 255, 0.94);
+  font-size: 1.12rem;
+  line-height: 1.45;
 }
 
 .detail-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
+  align-items: start;
 }
 
 .save-panel {
@@ -530,16 +591,29 @@ input {
 }
 
 .save-panel p {
-  margin: 8px 0 0;
-  color: var(--muted);
+  margin: 10px 0 0;
+  color: var(--dark-brown);
   font-size: 0.84rem;
   text-align: center;
 }
 
 .save-panel a:not(.button) {
-  color: var(--brand);
+  color: var(--dark-brown);
   font-weight: 800;
   text-decoration: underline;
+}
+
+.favorite-button {
+  min-height: 56px;
+  border: 2px solid var(--brand-dark);
+  color: var(--brand-dark);
+  font-size: 1rem;
+}
+
+.watch-wide {
+  min-height: 56px;
+  background: var(--brand-dark);
+  font-size: 1rem;
 }
 
 .benefit-panel,
@@ -557,20 +631,40 @@ input {
   margin-top: 42px;
   padding: 28px;
   background: #ffe6d7;
+  color: var(--dark-brown);
 }
 
 .benefit-panel h2 {
   margin: 0 0 18px;
+  font-family: var(--font-title);
   font-size: 1.1rem;
 }
 
 .benefit-panel ul {
   margin: 0;
-  padding-left: 22px;
+  padding: 0;
+  list-style: none;
 }
 
 .benefit-panel li + li {
-  margin-top: 10px;
+  margin-top: 18px;
+}
+
+.benefit-panel li {
+  position: relative;
+  padding-left: 28px;
+  line-height: 1.45;
+}
+
+.benefit-panel li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--brand);
 }
 
 .source-note {
@@ -756,6 +850,7 @@ input {
 
 .auth-card h1 {
   margin: 0;
+  font-family: var(--font-title);
   text-align: center;
   font-size: 1.35rem;
 }
@@ -774,7 +869,7 @@ input {
 .auth-form label {
   display: grid;
   gap: 7px;
-  color: #4f3e32;
+  color: var(--brand-dark);
   font-weight: 800;
   font-size: 0.86rem;
 }
@@ -785,7 +880,7 @@ input {
   border: 1px solid #d6c9bd;
   border-radius: 8px;
   padding: 0 14px;
-  background: white;
+  background: #faf5ee;
   color: var(--ink);
 }
 
@@ -859,6 +954,7 @@ input {
 
 .footer-brand {
   color: #4d362b;
+  font-family: var(--font-title);
   font-size: 1.15rem;
   font-weight: 900;
 }
@@ -905,10 +1001,14 @@ input {
   }
 
   .hero-inner,
-  .detail-hero,
   .science-hero {
     padding-top: 48px;
     padding-bottom: 56px;
+  }
+
+  .detail-hero,
+  .detail-hero-content {
+    min-height: 390px;
   }
 
   .hero h1,

@@ -56,7 +56,7 @@ impl IntoResponse for AppError {
     }
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone, FromRow, Serialize)]
 struct Content {
     id: i64,
     slug: String,
@@ -494,11 +494,11 @@ async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Ht
         r#"
         <section class="hero">
             <div class="hero-inner">
-                <h1>Des dessins animes<br>qui developpent vraiment<br>votre enfant.</h1>
+                <h1>Des dessins animés choisis pour eux. Une sérénité retrouvée pour vous.</h1>
                 <p>Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
                 <div class="hero-actions">
                     <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
-                    <a class="button button-outline-light" href="/science">Comment ca developpe</a>
+                    <a class="button button-outline-light" href="/science">Comment sont choisis nos contenus</a>
                 </div>
             </div>
         </section>
@@ -509,7 +509,6 @@ async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Ht
                     <div>
                         <h2>Choisissez votre plateforme</h2>
                     </div>
-                    <a class="text-link" href="/bibliotheque">Voir tout</a>
                 </div>
                 {}
             </section>
@@ -526,7 +525,7 @@ async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Ht
         </main>
 
         <section class="stat-band">
-            <strong>38%</strong> des enfants 4-14 ans regardent des dessins animes
+            <span>98% des enfants 4-14 ans regardent des dessins animes</span>
             <span>Certains developpent autant que des activites structurees</span>
         </section>
 
@@ -622,11 +621,12 @@ async fn content_detail(
     let body = format!(
         r#"
         <section class="detail-hero">
-            <div>
-                <p class="eyebrow">{} · {} · {}</p>
+            <img class="detail-hero-bg" src="{}" alt="">
+            <div class="detail-hero-overlay"></div>
+            <div class="detail-hero-content">
                 <h1>{}</h1>
+                <p class="eyebrow">{} · {} · {}</p>
                 <p class="detail-description">{}</p>
-                <span class="pill {}">{}</span>
             </div>
         </section>
 
@@ -639,9 +639,9 @@ async fn content_detail(
             <section class="benefit-panel">
                 <h2>Ce que ce contenu developpe chez votre enfant</h2>
                 <ul>
-                    <li><strong>{}</strong> - {}</li>
-                    <li><strong>Regulation attentionnelle</strong> - Le rythme laisse de la place pour commenter et anticiper.</li>
-                    <li><strong>Dialogue parent-enfant</strong> - Les themes sont faciles a reprendre apres l'episode.</li>
+                    <li><strong>{}</strong> : {}</li>
+                    <li><strong>Regulation emotionnelle</strong> : Les personnages modelisent comment nommer et gerer ses emotions.</li>
+                    <li><strong>Empathie</strong> : Chaque episode met en scene le point de vue de l'autre.</li>
                 </ul>
             </section>
 
@@ -657,13 +657,12 @@ async fn content_detail(
             </section>
         </main>
         "#,
+        a(&content.image_url),
+        h(&content.title),
         h(content.platform_label()),
         h(&content.duration),
         h(&content.age_range),
-        h(&content.title),
         h(&content.description),
-        h(benefit.key),
-        h(benefit.label),
         render_save_panel(&content, user.as_ref(), saved),
         a(&content.slug),
         h(content.platform_label()),
@@ -1473,7 +1472,11 @@ fn render_platform_tabs(active: &str, context: &str) -> String {
         "innerHTML"
     };
 
-    let mut tabs = String::from(r#"<div class="platform-tabs">"#);
+    let mut tabs = if context == "home" {
+        String::from(r#"<div class="platform-tabs home-tabs">"#)
+    } else {
+        String::from(r#"<div class="platform-tabs">"#)
+    };
     for (key, label) in [
         ("youtube", "YouTube"),
         ("netflix", "Netflix"),
@@ -1502,6 +1505,9 @@ fn render_platform_tabs(active: &str, context: &str) -> String {
             label
         ));
     }
+    if context == "home" {
+        tabs.push_str(r#"<a class="text-link home-see-all" href="/bibliotheque">Voir tout</a>"#);
+    }
     tabs.push_str("</div>");
     tabs
 }
@@ -1511,7 +1517,7 @@ fn render_home_platform_section(active: &str, contents: &[Content]) -> String {
         r#"
         <div id="home-platform">
             {}
-            <div id="platform-results">
+            <div id="platform-results" class="card-grid two-cols">
                 {}
             </div>
         </div>
@@ -1698,7 +1704,6 @@ fn render_content_card(content: &Content) -> String {
                 <h3><a href="/contenu/{}">{}</a></h3>
                 <p>{} · {}</p>
                 <a class="button button-primary card-watch" href="/go/{}">Regarder sur {}</a>
-                <a class="develop-link" href="/science">→ Developpe : {}</a>
             </div>
         </article>
         "#,
@@ -1711,37 +1716,47 @@ fn render_content_card(content: &Content) -> String {
         h(&content.duration),
         h(&content.age_range),
         a(&content.slug),
-        h(content.platform_label()),
-        h(benefit.label)
+        h(content.platform_label())
     )
 }
 
 fn render_save_panel(content: &Content, user: Option<&User>, saved: bool) -> String {
     match user {
-        Some(_) => format!(
-            r##"
-            <form id="save-panel" class="save-panel" hx-post="/contenu/{}/save" hx-target="#save-panel" hx-swap="outerHTML">
-                <button class="button {}" type="submit">{}</button>
-                <p>{}</p>
-            </form>
-            "##,
-            content.id,
-            if saved {
-                "button-saved"
-            } else {
-                "button-secondary"
-            },
-            if saved { "Sauvegarde" } else { "Sauvegarder" },
-            if saved {
-                "Ce contenu est dans votre compte parent."
-            } else {
-                "Ajoutez ce contenu a vos favoris."
-            }
-        ),
+        Some(_) => {
+            let favorite_json = serde_json::to_string(content).unwrap_or_else(|_| "{}".to_string());
+            format!(
+                r##"
+                <div id="save-panel" class="save-panel">
+                    <button class="button button-secondary favorite-button" type="button" data-favorite="{}" onclick="saveKroissantFavorite(this)">Mettre en favoris</button>
+                    <p class="favorite-feedback" aria-live="polite">{}</p>
+                    <script>
+                        function saveKroissantFavorite(button) {{
+                            const item = JSON.parse(button.dataset.favorite);
+                            const key = "kroissant:favorites";
+                            const current = JSON.parse(localStorage.getItem(key) || "[]");
+                            const next = current.filter((favorite) => favorite.slug !== item.slug);
+                            next.unshift({{ ...item, saved_at: new Date().toISOString() }});
+                            localStorage.setItem(key, JSON.stringify(next));
+                            button.textContent = "Ajoute aux favoris";
+                            const panel = button.closest("#save-panel");
+                            const feedback = panel && panel.querySelector(".favorite-feedback");
+                            if (feedback) feedback.textContent = "Ce contenu est sauvegarde dans ce navigateur.";
+                        }}
+                    </script>
+                </div>
+                "##,
+                a(&favorite_json),
+                if saved {
+                    "Ce contenu existe deja dans votre compte parent."
+                } else {
+                    "Sauvegarde locale dans le navigateur."
+                }
+            )
+        }
         None => format!(
             r#"
             <div id="save-panel" class="save-panel">
-                <a class="button button-secondary" href="/inscription?next=/contenu/{}">Sauvegarder</a>
+                <a class="button button-secondary favorite-button" href="/inscription?next=/contenu/{}">Mettre en favoris</a>
                 <p><a href="/inscription?next=/contenu/{}">Creez votre compte</a> pour retrouver vos favoris a chaque visite.</p>
             </div>
             "#,
@@ -1778,7 +1793,7 @@ fn render_auth_page(
             "Creez votre compte gratuit",
             "Sauvegardez vos contenus et retrouvez-les a chaque visite.",
             "/inscription",
-            "Creer mon compte - gratuit",
+            "Creer mon compte",
             "/connexion",
             "Se connecter",
         ),
