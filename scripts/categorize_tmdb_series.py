@@ -79,8 +79,8 @@ def main() -> int:
 
     config = load_config(Path(args.config))
     language = args.language or config.get("tmdb_language") or "fr-FR"
-    ollama_url = args.ollama_url or config.get("ollama_url") or os.environ.get("OLLAMA_URL") or OLLAMA_DEFAULT_URL
-    model = args.model or config.get("ollama_model") or os.environ.get("OLLAMA_MODEL") or "llama3.1"
+    ollama_url = args.ollama_url or os.environ.get("OLLAMA_URL") or config.get("ollama_url") or OLLAMA_DEFAULT_URL
+    model = args.model or os.environ.get("OLLAMA_MODEL") or config.get("ollama_model") or "llama3.1"
     categories = normalize_categories(config.get("categories", []))
     series_configs = config.get("series", [])
 
@@ -365,10 +365,23 @@ def classify_with_ollama(
     try:
         data = http_json("POST", url, body=body)
     except error.HTTPError as exc:
+        error_body = read_http_error(exc)
         if exc.code != 400:
-            raise
+            raise RuntimeError(
+                f"Ollama a repondu HTTP {exc.code} pour le modele {model}. "
+                f"Verifiez `ollama ps` ou lancez `ollama pull {model}`. "
+                f"Reponse: {error_body}"
+            ) from exc
         body["format"] = "json"
-        data = http_json("POST", url, body=body)
+        try:
+            data = http_json("POST", url, body=body)
+        except error.HTTPError as retry_exc:
+            retry_body = read_http_error(retry_exc)
+            raise RuntimeError(
+                f"Ollama a repondu HTTP {retry_exc.code} pour le modele {model}. "
+                f"Verifiez `ollama ps` ou lancez `ollama pull {model}`. "
+                f"Reponse: {retry_body}"
+            ) from retry_exc
 
     content = data.get("message", {}).get("content", "")
     parsed = json.loads(extract_json_object(content))
@@ -583,6 +596,14 @@ def http_json(
                 raise
             time.sleep(1 + attempt)
     raise RuntimeError("unreachable")
+
+
+def read_http_error(exc: error.HTTPError) -> str:
+    try:
+        body = exc.read().decode("utf-8", errors="replace").strip()
+    except Exception:
+        body = ""
+    return body or exc.reason
 
 
 def truncate(value: str, limit: int) -> str:
