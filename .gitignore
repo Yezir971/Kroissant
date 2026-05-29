@@ -1,6 +1,6 @@
 target/
-data/*.sqlite
 data/*.sqlite-*
+pdf-review/
 .env
 *.log
 .DS_Store
