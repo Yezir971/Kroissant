@@ -275,9 +275,9 @@ En production, fournir toujours `JWT_SECRET` au lancement et ne pas conserver la
 | Methode | Route | Description |
 | --- | --- | --- |
 | `GET` | `/` | Page d'accueil |
-| `GET` | `/bibliotheque` | Bibliotheque filtrable par plateforme |
+| `GET` | `/bibliotheque` | Series TMDb categorisees par IA, filtrables par tag |
 | `GET` | `/partials/home?platform=...` | Fragment HTMX du filtre accueil |
-| `GET` | `/partials/library?platform=...` | Fragment HTMX du filtre bibliotheque |
+| `GET` | `/partials/library?tag=...` | Fragment HTMX du filtre tag bibliotheque |
 | `GET` | `/contenu/{slug}` | Fiche detaillee d'un contenu |
 | `POST` | `/contenu/{id}/save` | Toggle favoris via HTMX |
 | `GET` | `/go/{slug}` | Enregistre l'historique si connecte puis redirige vers la plateforme |
@@ -292,25 +292,24 @@ En production, fournir toujours `JWT_SECRET` au lancement et ne pas conserver la
 
 ## Parametres de filtre
 
-Les plateformes supportees sont :
+Les plateformes supportees sur l'accueil sont :
 
 - `youtube`
 - `netflix`
 - `disney`
-- `all` pour la bibliotheque uniquement
 
 Exemples :
 
 ```text
-/bibliotheque?platform=all
-/bibliotheque?platform=netflix
+/bibliotheque
+/bibliotheque?tag=science
 /partials/home?platform=disney
 ```
 
 Les valeurs inconnues sont normalisees :
 
 - accueil : fallback sur `youtube`
-- bibliotheque : fallback sur `all`
+- bibliotheque : tag vide si absent
 
 ## Schema SQLite
 
@@ -535,29 +534,13 @@ Cela permet de mettre a jour a la fois les cartes et l'etat actif du bouton.
 
 ### Filtre bibliotheque
 
-Les boutons appellent :
+Le champ de recherche par tag appelle :
 
 ```text
-GET /partials/library?platform=...
+GET /bibliotheque?tag=...
 ```
 
-Le fragment remplace :
-
-```text
-#library-section
-```
-
-avec :
-
-```text
-hx-swap="innerHTML"
-```
-
-Les boutons poussent aussi l'URL :
-
-```text
-hx-push-url="/bibliotheque?platform=..."
-```
+Les anciennes cartes seed ne sont pas rendues dans la bibliotheque. La page affiche seulement les series TMDb importees par le script Ollama.
 
 ### Sauvegarde contenu
 
@@ -660,14 +643,14 @@ Contient :
 Route :
 
 ```text
-GET /bibliotheque?platform=all
+GET /bibliotheque?tag=science
 ```
 
 Contient :
 
-- filtres YouTube, Netflix, Disney+, Tous ;
-- grille de cartes ;
-- URLs synchronisees avec `hx-push-url`.
+- recherche par tag ;
+- chips des tags disponibles ;
+- grille des series TMDb/Ollama categorisees par IA.
 
 ### Fiche contenu
 
@@ -739,7 +722,7 @@ Tester les pages :
 
 ```bash
 curl -i http://127.0.0.1:3000/
-curl -i "http://127.0.0.1:3000/bibliotheque?platform=all"
+curl -i "http://127.0.0.1:3000/bibliotheque?tag=science"
 curl -i http://127.0.0.1:3000/contenu/bluey-saison-1
 ```
 

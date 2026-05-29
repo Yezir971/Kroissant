@@ -424,16 +424,8 @@ input {
   min-height: calc(100vh - 62px);
 }
 
-.library-tabs {
-  justify-content: center;
-}
-
 .library-title {
-  margin: 48px 0 24px;
-}
-
-.tagged-series-block {
-  margin-top: 54px;
+  margin: 16px 0 24px;
 }
 
 .tag-search-form {

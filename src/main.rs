@@ -561,14 +561,7 @@ async fn library(
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
     let user = current_user(&state, &headers).await;
-    let active = normalize_platform_or_all(query.platform.as_deref());
     let active_tag = normalize_tag(query.tag.as_deref());
-    let contents = get_contents(
-        &state.pool,
-        if active == "all" { None } else { Some(active) },
-        None,
-    )
-    .await?;
     let tags = available_tags(&state.pool).await?;
     let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
     let body = format!(
@@ -579,7 +572,7 @@ async fn library(
             </section>
         </main>
         "#,
-        render_library_section(active, &contents, active_tag.as_deref(), &tags, &series)
+        render_library_section(active_tag.as_deref(), &tags, &series)
     );
 
     Ok(Html(render_page(
@@ -595,19 +588,10 @@ async fn library_partial(
     State(state): State<AppState>,
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
-    let active = normalize_platform_or_all(query.platform.as_deref());
     let active_tag = normalize_tag(query.tag.as_deref());
-    let contents = get_contents(
-        &state.pool,
-        if active == "all" { None } else { Some(active) },
-        None,
-    )
-    .await?;
     let tags = available_tags(&state.pool).await?;
     let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
     Ok(Html(render_library_section(
-        active,
-        &contents,
         active_tag.as_deref(),
         &tags,
         &series,
@@ -1298,15 +1282,6 @@ fn normalize_platform(platform: Option<&str>) -> &str {
     }
 }
 
-fn normalize_platform_or_all(platform: Option<&str>) -> &str {
-    match platform {
-        Some("youtube") => "youtube",
-        Some("netflix") => "netflix",
-        Some("disney") => "disney",
-        _ => "all",
-    }
-}
-
 fn normalize_tag(tag: Option<&str>) -> Option<String> {
     tag.map(str::trim)
         .filter(|value| !value.is_empty())
@@ -1546,87 +1521,33 @@ fn render_home_platform_section(active: &str, contents: &[Content]) -> String {
     )
 }
 
-fn render_library_tabs(active: &str, active_tag: Option<&str>) -> String {
-    let mut tabs = String::from(r#"<div class="platform-tabs library-tabs">"#);
-    let tag_suffix = active_tag
-        .map(|tag| format!("&tag={}", a(tag)))
-        .unwrap_or_default();
-    for (key, label) in [
-        ("youtube", "YouTube"),
-        ("netflix", "Netflix"),
-        ("disney", "Disney+"),
-        ("all", "Tous"),
-    ] {
-        tabs.push_str(&format!(
-            r##"
-            <button
-                class="platform-tab {}"
-                hx-get="/partials/library?platform={}{}"
-                hx-target="#library-section"
-                hx-swap="innerHTML"
-                hx-push-url="/bibliotheque?platform={}{}"
-                type="button">{}</button>
-            "##,
-            if active == key { "active" } else { "" },
-            key,
-            tag_suffix,
-            key,
-            tag_suffix,
-            label
-        ));
-    }
-    tabs.push_str("</div>");
-    tabs
-}
-
 fn render_library_section(
-    active: &str,
-    contents: &[Content],
     active_tag: Option<&str>,
     tags: &[String],
     series: &[TaggedSeries],
 ) -> String {
     format!(
         r#"
-        {}
         <div class="section-heading library-title">
-            <h1>{} contenus selectionnes - {}</h1>
-            <p>Chaque contenu developpe une competence reelle chez votre enfant</p>
+            <h1>Series categorisees par IA</h1>
+            <p>Recherche par tags calcules au niveau serie avec le contexte limite du JSON.</p>
         </div>
-        <div id="library-results" class="card-grid library-grid">
+        {}
+        <div class="card-grid library-grid ai-series-grid">
             {}
         </div>
-        <section class="section-block tagged-series-block">
-            <div class="section-heading">
-                <h2>Series categorisees par IA</h2>
-                <p>Les tags sont calcules au niveau serie avec un contexte limite aux episodes choisis dans le JSON.</p>
-            </div>
-            {}
-            <div class="card-grid library-grid ai-series-grid">
-                {}
-            </div>
-        </section>
         "#,
-        render_library_tabs(active, active_tag),
-        contents.len(),
-        h(platform_label(active)),
-        render_cards(contents),
-        render_tag_search(active, active_tag, tags),
+        render_tag_search(active_tag, tags),
         render_tagged_series_or_empty(series, active_tag),
     )
 }
 
-fn render_tag_search(active_platform: &str, active_tag: Option<&str>, tags: &[String]) -> String {
+fn render_tag_search(active_tag: Option<&str>, tags: &[String]) -> String {
     let value = active_tag.unwrap_or("");
-    let clear_href = format!("/bibliotheque?platform={}", a(active_platform));
     let mut chips = String::new();
 
     for tag in tags {
-        let href = format!(
-            "/bibliotheque?platform={}&tag={}",
-            a(active_platform),
-            a(tag)
-        );
+        let href = format!("/bibliotheque?tag={}", a(tag));
         chips.push_str(&format!(
             r#"<a class="tag-chip {}" href="{}">{}</a>"#,
             if active_tag == Some(tag.as_str()) {
@@ -1642,21 +1563,18 @@ fn render_tag_search(active_platform: &str, active_tag: Option<&str>, tags: &[St
     format!(
         r#"
         <form class="tag-search-form" method="get" action="/bibliotheque">
-            <input type="hidden" name="platform" value="{}">
             <label for="tag-search">Chercher par tag</label>
             <div>
                 <input id="tag-search" name="tag" value="{}" placeholder="empathie, science, resilience...">
                 <button class="button button-secondary" type="submit">Chercher</button>
-                <a class="button button-light" href="{}">Effacer</a>
+                <a class="button button-light" href="/bibliotheque">Effacer</a>
             </div>
         </form>
         <div class="tag-chip-row">
             {}
         </div>
         "#,
-        a(active_platform),
         a(value),
-        clear_href,
         chips
     )
 }
