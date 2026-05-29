@@ -21,6 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/creer-une-app-complete-en-rust /usr/local/bin/kroissant
 COPY static ./static
+COPY data ./data
 
 RUN mkdir -p data \
     && chown -R app:app /app
@@ -34,6 +35,5 @@ ENV JWT_SECRET=dev-secret-change-me-kroissant
 ENV RUST_LOG=info
 
 EXPOSE 3000
-VOLUME ["/app/data"]
 
 CMD ["kroissant"]
