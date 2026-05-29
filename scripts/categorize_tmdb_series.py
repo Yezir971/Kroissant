@@ -65,6 +65,7 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Fetch TMDb context but do not call Ollama or write SQLite.")
     args = parser.parse_args()
     ui = TerminalUI()
+    load_dotenv(Path(".env"))
 
     if args.search:
         language = args.language or "fr-FR"
@@ -161,6 +162,23 @@ def print_search_rows(rows: list[dict[str, Any]]) -> None:
 def load_config(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line.removeprefix("export ").strip()
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def normalize_categories(values: list[Any]) -> list[str]:
