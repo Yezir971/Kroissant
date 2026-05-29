@@ -1,8 +1,8 @@
-# Kroissant - application Rust + HTMX
+# Kroissant - application Rust + HTMX MVP
 
-Documentation technique de l'application Kroissant, une app web server-side en Rust pour explorer des contenus animes selectionnes, avec auth JWT, interactions HTMX et donnees de developpement dans SQLite.
+Documentation technique de l'application Kroissant, une app web server-side en Rust pour explorer un catalogue pour des dessins animés selectionnés, pas de streaming réel. Utilisation auth JWT, interactions HTMX et donnees de developpement dans SQLite.
 
-Le projet a ete initialise sans Git, comme demande. Il n'y a pas de dossier `.git`.
+Le projet à été initialisé sans Git, comme demandé. Il n'y a pas de dossier `.git`.
 
 ## Stack technique
 
