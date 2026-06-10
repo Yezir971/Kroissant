@@ -1,3 +1,6 @@
-//! Contrôleurs Web (Handlers Axum).
-//!
-//! // TODO: Déplacer les fonctions home, library, content_detail, etc.
+//! Centralisation des handlers par domaine.
+
+pub mod auth;
+pub mod content;
+pub mod home;
+pub mod library;
