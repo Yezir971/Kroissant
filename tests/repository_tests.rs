@@ -1,7 +1,6 @@
 mod common;
 
 use common::setup_test_db;
-use kroissant::models::Content;
 use kroissant::repositories::content::{ContentRepository, SqliteContentRepository};
 use kroissant::repositories::user::{SqliteUserRepository, UserRepository};
 
