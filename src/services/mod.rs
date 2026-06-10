@@ -1,3 +1,7 @@
 //! Logique métier et services.
-//!
-//! // TODO: Implémenter la logique de sélection et de validation.
+
+pub mod auth;
+pub mod content;
+
+pub use auth::{AuthService, AuthServiceImpl};
+pub use content::{ContentService, ContentServiceImpl};

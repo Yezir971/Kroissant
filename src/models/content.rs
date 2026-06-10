@@ -14,6 +14,7 @@ pub struct Content {
     pub skill: String,
     pub image_url: String,
     pub source_url: String,
+    pub sort_order: i64,
 }
 
 impl Content {
@@ -44,6 +45,7 @@ mod tests {
             skill: "skill".to_string(),
             image_url: "img".to_string(),
             source_url: "url".to_string(),
+            sort_order: 1,
         };
         assert_eq!(content.title, "Test");
         assert_eq!(content.platform_label(), "YouTube");

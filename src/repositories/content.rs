@@ -1,16 +1,20 @@
 //! Repository pour la gestion des contenus.
-use async_trait::async_trait;
-use crate::models::{Content, TaggedSeries};
 use crate::error::AppResult;
+use crate::models::{Content, TaggedSeries};
+use async_trait::async_trait;
 use sqlx::SqlitePool;
 
 #[async_trait]
 pub trait ContentRepository: Send + Sync {
-    async fn get_contents(&self, platform: Option<&str>, limit: Option<i64>) -> AppResult<Vec<Content>>;
+    async fn get_contents(
+        &self,
+        platform: Option<&str>,
+        limit: Option<i64>,
+    ) -> AppResult<Vec<Content>>;
     async fn get_by_slug(&self, slug: &str) -> AppResult<Option<Content>>;
     async fn get_by_id(&self, id: i64) -> AppResult<Option<Content>>;
     async fn get_similar(&self, content: &Content) -> AppResult<Vec<Content>>;
-    
+
     async fn available_tags(&self) -> AppResult<Vec<String>>;
     async fn tagged_series(&self, tag: Option<&str>) -> AppResult<Vec<TaggedSeries>>;
 }
@@ -27,7 +31,11 @@ impl SqliteContentRepository {
 
 #[async_trait]
 impl ContentRepository for SqliteContentRepository {
-    async fn get_contents(&self, platform: Option<&str>, limit: Option<i64>) -> AppResult<Vec<Content>> {
+    async fn get_contents(
+        &self,
+        platform: Option<&str>,
+        limit: Option<i64>,
+    ) -> AppResult<Vec<Content>> {
         let limit = limit.unwrap_or(100);
         let rows = match platform {
             Some(p) => {

@@ -41,23 +41,38 @@ impl IntoResponse for AppError {
         let (status, message) = match self {
             AppError::Database(ref e) => {
                 eprintln!("Database error: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Une erreur de base de données est survenue.".to_string())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Une erreur de base de données est survenue.".to_string(),
+                )
             }
             AppError::Auth(m) => (StatusCode::UNAUTHORIZED, m),
-            AppError::InvalidToken => (StatusCode::UNAUTHORIZED, "Session expirée ou invalide.".to_string()),
+            AppError::InvalidToken => (
+                StatusCode::UNAUTHORIZED,
+                "Session expirée ou invalide.".to_string(),
+            ),
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
             AppError::Validation(m) => (StatusCode::BAD_REQUEST, m),
             AppError::Internal(ref e) => {
                 eprintln!("Internal error: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Une erreur interne est survenue.".to_string())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Une erreur interne est survenue.".to_string(),
+                )
             }
             AppError::HashError(m) => {
                 eprintln!("Hash error: {}", m);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Erreur lors du traitement du mot de passe.".to_string())
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Erreur lors du traitement du mot de passe.".to_string(),
+                )
             }
             AppError::JwtError(ref e) => {
                 eprintln!("JWT error: {:?}", e);
-                (StatusCode::UNAUTHORIZED, "Erreur d'authentification.".to_string())
+                (
+                    StatusCode::UNAUTHORIZED,
+                    "Erreur d'authentification.".to_string(),
+                )
             }
         };
 

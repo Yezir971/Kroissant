@@ -1,19 +1,12 @@
 use anyhow::{Context, Result};
-use argon2::{
-    Argon2,
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-};
 use ax_extract::{Form, Path, Query, State};
 use axum::{
     Router,
-    http::{HeaderMap, HeaderValue, StatusCode, header},
+    http::{HeaderValue, StatusCode, header},
     response::{Html, IntoResponse, Redirect, Response},
     routing::{get, post},
 };
-use chrono::{Duration, Utc};
 use html_escape::{encode_double_quoted_attribute, encode_text};
-use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
-use rand_core::OsRng;
 use sqlx::{
     SqlitePool,
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
@@ -22,19 +15,17 @@ use std::{env, net::SocketAddr, str::FromStr};
 use tokio::{fs, net::TcpListener};
 use tower_http::services::ServeDir;
 
-use std::sync::Arc;
-use kroissant::{AppState, AppResult};
+use kroissant::auth::{AUTH_COOKIE, AuthUser};
 use kroissant::models::*;
 use kroissant::repositories::{SqliteContentRepository, SqliteUserRepository};
-
-// ... (rest of imports remains same)
+use kroissant::services::{AuthServiceImpl, ContentServiceImpl};
+use kroissant::{AppError, AppResult, AppState};
+use std::sync::Arc;
 
 // Alias pour faciliter la migration progressive
 mod ax_extract {
     pub use axum::extract::{Form, Path, Query, State};
 }
-
-const AUTH_COOKIE: &str = "kroissant_token";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -65,11 +56,17 @@ async fn main() -> Result<()> {
     let content_repo = Arc::new(SqliteContentRepository::new(pool.clone()));
     let user_repo = Arc::new(SqliteUserRepository::new(pool.clone()));
 
+    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string());
+    let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_secret.clone()));
+    let content_service = Arc::new(ContentServiceImpl::new(content_repo.clone(), user_repo.clone()));
+
     let state = AppState::new(
         pool,
-        env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string()),
+        jwt_secret,
         content_repo,
         user_repo,
+        auth_service,
+        content_service,
     );
 
     let app = Router::new()
@@ -392,8 +389,7 @@ async fn seed_fake_data(pool: &SqlitePool) -> Result<()> {
     Ok(())
 }
 
-async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Html<String>> {
-    let user = current_user(&state, &headers).await;
+async fn home(AuthUser(user): AuthUser, State(state): State<AppState>) -> AppResult<Html<String>> {
     let selected = state.content_repo.get_contents(Some("youtube"), Some(2)).await?;
     let moment = state.content_repo.get_contents(None, Some(2)).await?;
 
@@ -457,19 +453,24 @@ async fn home_partial(
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
     let platform = normalize_platform(query.platform.as_deref());
-    let contents = state.content_repo.get_contents(Some(platform), Some(2)).await?;
+    let contents = state
+        .content_repo
+        .get_contents(Some(platform), Some(2))
+        .await?;
     Ok(Html(render_home_platform_section(platform, &contents)))
 }
 
 async fn library(
+    AuthUser(user): AuthUser,
     State(state): State<AppState>,
-    headers: HeaderMap,
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
-    let user = current_user(&state, &headers).await;
     let active_tag = normalize_tag(query.tag.as_deref());
     let tags = state.content_repo.available_tags().await?;
-    let series = state.content_repo.tagged_series(active_tag.as_deref()).await?;
+    let series = state
+        .content_repo
+        .tagged_series(active_tag.as_deref())
+        .await?;
     let body = format!(
         r#"
         <main class="library-shell">
@@ -496,7 +497,10 @@ async fn library_partial(
 ) -> AppResult<Html<String>> {
     let active_tag = normalize_tag(query.tag.as_deref());
     let tags = state.content_repo.available_tags().await?;
-    let series = state.content_repo.tagged_series(active_tag.as_deref()).await?;
+    let series = state
+        .content_repo
+        .tagged_series(active_tag.as_deref())
+        .await?;
     Ok(Html(render_library_section(
         active_tag.as_deref(),
         &tags,
@@ -505,11 +509,10 @@ async fn library_partial(
 }
 
 async fn content_detail(
+    AuthUser(user): AuthUser,
     State(state): State<AppState>,
-    headers: HeaderMap,
     Path(slug): Path<String>,
 ) -> AppResult<Response> {
-    let user = current_user(&state, &headers).await;
     let Some(content) = state.content_repo.get_by_slug(&slug).await? else {
         return Ok((
             StatusCode::NOT_FOUND,
@@ -522,8 +525,9 @@ async fn content_detail(
         Some(user) => state.user_repo.is_saved(user.id, content.id).await?,
         None => false,
     };
+
     let similar = state.content_repo.get_similar(&content).await?;
-    let benefit = benefit_for(&content.skill);
+    let benefit = state.content_service.get_benefit_for(&content.skill);
 
     let body = format!(
         r#"
@@ -590,35 +594,23 @@ async fn content_detail(
 }
 
 async fn toggle_save(
+    AuthUser(user): AuthUser,
     State(state): State<AppState>,
-    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> AppResult<Response> {
-    let Some(content) = state.content_repo.get_by_id(id).await? else {
-        return Ok((
-            StatusCode::NOT_FOUND,
-            Html("Contenu introuvable".to_string()),
-        )
-            .into_response());
+    let Some(user) = user else {
+        return Ok(Html(r#"<p><a href="/inscription">Inscrivez-vous</a> pour sauvegarder ce contenu.</p>"#.to_string()).into_response());
     };
 
-    let Some(user) = current_user(&state, &headers).await else {
-        return Ok(Html(render_save_panel(&content, None, false)).into_response());
-    };
+    let saved = state.content_service.toggle_save(user.id, id).await?;
+    let content = state.content_repo.get_by_id(id).await?.unwrap();
 
-    let already_saved = state.user_repo.is_saved(user.id, content.id).await?;
-    if already_saved {
-        state.user_repo.unsave_item(user.id, content.id).await?;
-    } else {
-        state.user_repo.save_item(user.id, content.id).await?;
-    }
-
-    Ok(Html(render_save_panel(&content, Some(&user), !already_saved)).into_response())
+    Ok(Html(render_save_panel(&content, Some(&user), saved)).into_response())
 }
 
 async fn go_to_source(
+    AuthUser(user): AuthUser,
     State(state): State<AppState>,
-    headers: HeaderMap,
     Path(slug): Path<String>,
 ) -> AppResult<Response> {
     let Some(content) = state.content_repo.get_by_slug(&slug).await? else {
@@ -629,17 +621,16 @@ async fn go_to_source(
             .into_response());
     };
 
-    if let Some(user) = current_user(&state, &headers).await {
-        state.user_repo.add_to_history(user.id, content.id).await?;
+    if let Some(user) = user {
+        state.content_service.log_watch_history(user.id, content.id).await?;
     }
 
     Ok(Redirect::to(&content.source_url).into_response())
 }
 
-async fn science(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Html<String>> {
-    let user = current_user(&state, &headers).await;
+async fn science(AuthUser(user): AuthUser, State(state): State<AppState>) -> AppResult<Html<String>> {
     let mut cards = String::new();
-    for benefit in benefits().into_iter().take(4) {
+    for benefit in state.content_service.get_benefits().into_iter().take(4) {
         cards.push_str(&format!(
             r#"
             <article class="science-card">
@@ -685,11 +676,10 @@ async fn science(State(state): State<AppState>, headers: HeaderMap) -> AppResult
 }
 
 async fn register_page(
-    State(state): State<AppState>,
-    headers: HeaderMap,
+    AuthUser(user): AuthUser,
+    State(_state): State<AppState>,
     Query(query): Query<AuthQuery>,
 ) -> AppResult<Html<String>> {
-    let user = current_user(&state, &headers).await;
     Ok(Html(render_auth_page(
         AuthMode::Register,
         query.next,
@@ -702,50 +692,29 @@ async fn register(
     State(state): State<AppState>,
     Form(form): Form<AuthForm>,
 ) -> AppResult<Response> {
-    let email = form.email.trim().to_lowercase();
     let next = clean_next(form.next.clone());
 
-    if email.is_empty() || form.password.len() < 8 {
-        return Ok((
-            StatusCode::BAD_REQUEST,
+    match state.auth_service.register(&form.email, &form.password).await {
+        Ok(token) => Ok(redirect_with_cookie(&next, &token)),
+        Err(AppError::Auth(msg)) => Ok((
+            StatusCode::BAD_REQUEST, // Or CONFLICT, but AuthService returns Auth error
             Html(render_auth_page(
                 AuthMode::Register,
                 form.next,
-                Some("Utilisez un email valide et un mot de passe de 8 caracteres minimum."),
+                Some(&msg),
                 None,
             )),
         )
-            .into_response());
+            .into_response()),
+        Err(e) => Err(e),
     }
-
-    let exists = state.user_repo.get_by_email(&email).await?;
-
-    if exists.is_some() {
-        return Ok((
-            StatusCode::CONFLICT,
-            Html(render_auth_page(
-                AuthMode::Register,
-                form.next,
-                Some("Un compte existe deja pour cet email. Connectez-vous."),
-                None,
-            )),
-        )
-            .into_response());
-    }
-
-    let password_hash = hash_password(&form.password)?;
-    let user_id = state.user_repo.create_user(&email, &password_hash).await?;
-
-    let token = create_jwt(user_id, &email, &state.jwt_secret)?;
-    Ok(redirect_with_cookie(&next, &token))
 }
 
 async fn login_page(
-    State(state): State<AppState>,
-    headers: HeaderMap,
+    AuthUser(user): AuthUser,
+    State(_state): State<AppState>,
     Query(query): Query<AuthQuery>,
 ) -> AppResult<Html<String>> {
-    let user = current_user(&state, &headers).await;
     Ok(Html(render_auth_page(
         AuthMode::Login,
         query.next,
@@ -755,55 +724,38 @@ async fn login_page(
 }
 
 async fn login(State(state): State<AppState>, Form(form): Form<AuthForm>) -> AppResult<Response> {
-    let email = form.email.trim().to_lowercase();
     let next = clean_next(form.next.clone());
 
-    let record = state.user_repo.get_by_email(&email).await?;
-
-    let Some((user_id, password_hash)) = record else {
-        return Ok((
+    match state.auth_service.login(&form.email, &form.password).await {
+        Ok(token) => Ok(redirect_with_cookie(&next, &token)),
+        Err(AppError::Auth(msg)) => Ok((
             StatusCode::UNAUTHORIZED,
             Html(render_auth_page(
                 AuthMode::Login,
                 form.next,
-                Some("Email ou mot de passe incorrect."),
+                Some(&msg),
                 None,
             )),
         )
-            .into_response());
-    };
-
-    if !verify_password(&form.password, &password_hash) {
-        return Ok((
-            StatusCode::UNAUTHORIZED,
-            Html(render_auth_page(
-                AuthMode::Login,
-                form.next,
-                Some("Email ou mot de passe incorrect."),
-                None,
-            )),
-        )
-            .into_response());
+            .into_response()),
+        Err(e) => Err(e),
     }
-
-    let token = create_jwt(user_id, &email, &state.jwt_secret)?;
-    Ok(redirect_with_cookie(&next, &token))
 }
 
 async fn logout() -> Response {
     let mut response = Redirect::to("/").into_response();
     response.headers_mut().insert(
         header::SET_COOKIE,
-        HeaderValue::from_static("kroissant_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"),
+        HeaderValue::from_str(&format!(
+            "{}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+            AUTH_COOKIE
+        ))
+        .unwrap(),
     );
     response
 }
 
-async fn account(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Response> {
-    let Some(user) = current_user(&state, &headers).await else {
-        return Ok(Redirect::to("/connexion?next=/compte").into_response());
-    };
-
+async fn account(user: User, State(state): State<AppState>) -> AppResult<Response> {
     let saved = state.user_repo.get_saved_contents(user.id).await?;
     let history = state.user_repo.get_history_contents(user.id).await?;
     let body = format!(
@@ -853,76 +805,9 @@ async fn account(State(state): State<AppState>, headers: HeaderMap) -> AppResult
     .into_response())
 }
 
-async fn current_user(state: &AppState, headers: &HeaderMap) -> Option<User> {
-    let token = cookie_value(headers, AUTH_COOKIE)?;
-    let claims = decode::<Claims>(
-        &token,
-        &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
-        &Validation::default(),
-    )
-    .ok()?
-    .claims;
-
-    state.user_repo.get_by_id(claims.sub).await.ok().flatten()
-}
-
-fn cookie_value(headers: &HeaderMap, name: &str) -> Option<String> {
-    let cookies = headers.get_all(header::COOKIE);
-    for value in cookies {
-        let Ok(raw) = value.to_str() else {
-            continue;
-        };
-        for cookie in raw.split(';') {
-            let mut parts = cookie.trim().splitn(2, '=');
-            let Some(cookie_name) = parts.next() else {
-                continue;
-            };
-            let Some(cookie_value) = parts.next() else {
-                continue;
-            };
-            if cookie_name == name {
-                return Some(cookie_value.to_string());
-            }
-        }
-    }
-    None
-}
-
-fn create_jwt(user_id: i64, email: &str, secret: &str) -> Result<String> {
-    let exp = Utc::now() + Duration::days(7);
-    let claims = Claims {
-        sub: user_id,
-        email: email.to_string(),
-        exp: exp.timestamp() as usize,
-    };
-    Ok(encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(secret.as_bytes()),
-    )?)
-}
-
-fn hash_password(password: &str) -> Result<String> {
-    let salt = SaltString::generate(&mut OsRng);
-    Ok(Argon2::default()
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|error| anyhow::anyhow!("hash password: {error}"))?
-        .to_string())
-}
-
-fn verify_password(password: &str, password_hash: &str) -> bool {
-    let Ok(parsed_hash) = PasswordHash::new(password_hash) else {
-        return false;
-    };
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .is_ok()
-}
-
 fn redirect_with_cookie(location: &str, token: &str) -> Response {
     let mut response = Redirect::to(location).into_response();
-    let cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-AAge=604800")
-        .replace("Max-AAge", "Max-Age");
+    let cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
     response.headers_mut().insert(
         header::SET_COOKIE,
         HeaderValue::from_str(&cookie).expect("valid set-cookie header"),
@@ -956,66 +841,6 @@ fn platform_label(platform: &str) -> &'static str {
         "disney" => "Disney+",
         _ => "Tous",
     }
-}
-
-fn benefits() -> Vec<Benefit> {
-    vec![
-        Benefit {
-            key: "resilience",
-            label: "Resilience",
-            summary: "Apprendre a surmonter les obstacles en maintenant l'effort.",
-            detail: "Capacite a surmonter les obstacles. Modelisee par les personnages via l'echec, la perseverance et la recuperation emotionnelle.",
-            source: "Analyse 150 episodes Bluey / Tandfonline, 2025",
-        },
-        Benefit {
-            key: "empathie",
-            label: "Empathie",
-            summary: "Comprendre le point de vue de l'autre dans des situations simples.",
-            detail: "Comprehension du point de vue de l'autre. Les contenus mettent en scene des situations ou le personnage doit se mettre a la place d'autrui.",
-            source: "Prithviraj et al., 2024 / Impact of cartoons on childhood development",
-        },
-        Benefit {
-            key: "language",
-            label: "Developpement du langage",
-            summary: "Nommer, raconter et reformuler ce qui vient d'etre vu.",
-            detail: "Vocabulaire, narration, comprehension orale. Les programmes educatifs favorisent activement ces dimensions.",
-            source: "Cohorte Elfe / INSERM, 2023 / Etude longitudinale sur 14 000 enfants francais",
-        },
-        Benefit {
-            key: "regulation",
-            label: "Regulation emotionnelle",
-            summary: "Reconnaître ses emotions et choisir une reponse adaptee.",
-            detail: "Nommer, reconnaître et gerer ses emotions. Reduit la reactivite emotionnelle a long terme.",
-            source: "JAMA Pediatrics - Radesky et al., 2023",
-        },
-        Benefit {
-            key: "creativite",
-            label: "Creativite",
-            summary: "Explorer plusieurs idees sans chercher une seule bonne reponse.",
-            detail: "Les recits ouverts encouragent les enfants a inventer, comparer et tester des variantes.",
-            source: "LeadingTree 2023 - Early creative learning review",
-        },
-        Benefit {
-            key: "science",
-            label: "Science",
-            summary: "Observer, poser une question et verifier une hypothese simple.",
-            detail: "Les contenus scientifiques de qualite structurent la curiosite: observation, prediction, verification et vocabulaire precis.",
-            source: "Arcom 2024 - Jeunesse et contenus educatifs",
-        },
-    ]
-}
-
-fn benefit_for(key: &str) -> Benefit {
-    benefits()
-        .into_iter()
-        .find(|benefit| benefit.key == key)
-        .unwrap_or(Benefit {
-            key: "resilience",
-            label: "Resilience",
-            summary: "Apprendre a surmonter les obstacles en maintenant l'effort.",
-            detail: "Capacite a surmonter les obstacles.",
-            source: "Analyse Kroissant",
-        })
 }
 
 fn render_page(
@@ -1354,7 +1179,7 @@ fn tmdb_image_url(path: &str) -> String {
 }
 
 fn render_content_card(content: &Content) -> String {
-    let benefit = benefit_for(&content.skill);
+    let benefit = Benefit::for_skill(&content.skill);
     format!(
         r#"
         <article class="content-card">
@@ -1427,7 +1252,6 @@ fn render_save_panel(content: &Content, user: Option<&User>, saved: bool) -> Str
         ),
     }
 }
-
 
 fn render_auth_page(
     mode: AuthMode,

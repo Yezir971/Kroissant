@@ -1,3 +1,9 @@
 //! Logique d'authentification et sécurité.
-//!
-//! // TODO: Gérer JWT, Argon2 et la récupération de l'utilisateur courant.
+
+pub mod jwt;
+pub mod middleware;
+pub mod password;
+
+pub use jwt::{create_token, validate_token};
+pub use middleware::{AUTH_COOKIE, AuthUser};
+pub use password::{hash_password, verify_password};

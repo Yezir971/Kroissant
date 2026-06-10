@@ -2,7 +2,7 @@ use sqlx::SqlitePool;
 
 pub async fn setup_test_db() -> SqlitePool {
     let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
-    
+
     let statements = [
         r#"
         CREATE TABLE users (
@@ -85,6 +85,6 @@ pub async fn setup_test_db() -> SqlitePool {
     for statement in statements {
         sqlx::query(statement).execute(&pool).await.unwrap();
     }
-    
+
     pool
 }

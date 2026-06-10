@@ -10,5 +10,5 @@ pub mod routes;
 pub mod services;
 pub mod views;
 
-pub use error::{AppError, AppResult};
 pub use app_state::AppState;
+pub use error::{AppError, AppResult};

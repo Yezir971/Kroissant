@@ -1,6 +1,6 @@
 //! Modèle représentant une série TMDb avec ses tags.
-use sqlx::FromRow;
 use serde::Serialize;
+use sqlx::FromRow;
 
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct TaggedSeries {
