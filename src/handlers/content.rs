@@ -52,7 +52,8 @@ pub async fn toggle_save(
     };
 
     let saved = state.content_service.toggle_save(user.id, id).await?;
-    let content = state.content_repo.get_by_id(id).await?.unwrap();
+    let content = state.content_repo.get_by_id(id).await?
+        .ok_or_else(|| crate::error::AppError::NotFound("Contenu introuvable".to_string()))?;
 
     Ok(Html(views::render_save_panel(&content, Some(&user), saved)).into_response())
 }

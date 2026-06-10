@@ -85,14 +85,12 @@ pub async fn login(State(state): State<AppState>, Form(form): Form<AuthForm>) ->
 /// Action de déconnexion.
 pub async fn logout() -> Response {
     let mut response = Redirect::to("/").into_response();
-    response.headers_mut().insert(
-        header::SET_COOKIE,
-        HeaderValue::from_str(&format!(
-            "{}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
-            AUTH_COOKIE
-        ))
-        .unwrap(),
-    );
+    if let Ok(value) = HeaderValue::from_str(&format!(
+        "{}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+        AUTH_COOKIE
+    )) {
+        response.headers_mut().insert(header::SET_COOKIE, value);
+    }
     response
 }
 
@@ -107,9 +105,8 @@ pub async fn account(user: User, State(state): State<AppState>) -> AppResult<Res
 fn redirect_with_cookie(location: &str, token: &str) -> Response {
     let mut response = Redirect::to(location).into_response();
     let cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
-    response.headers_mut().insert(
-        header::SET_COOKIE,
-        HeaderValue::from_str(&cookie).expect("valid set-cookie header"),
-    );
+    if let Ok(value) = HeaderValue::from_str(&cookie) {
+        response.headers_mut().insert(header::SET_COOKIE, value);
+    }
     response
 }
