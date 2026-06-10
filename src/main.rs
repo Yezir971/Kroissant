@@ -15,15 +15,19 @@ use html_escape::{encode_double_quoted_attribute, encode_text};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use rand_core::OsRng;
 use sqlx::{
-    FromRow, SqlitePool,
+    SqlitePool,
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
 };
 use std::{env, net::SocketAddr, str::FromStr};
 use tokio::{fs, net::TcpListener};
 use tower_http::services::ServeDir;
 
-use kroissant::{AppState, AppError, AppResult};
+use std::sync::Arc;
+use kroissant::{AppState, AppResult};
 use kroissant::models::*;
+use kroissant::repositories::{SqliteContentRepository, SqliteUserRepository};
+
+// ... (rest of imports remains same)
 
 // Alias pour faciliter la migration progressive
 mod ax_extract {
@@ -31,23 +35,6 @@ mod ax_extract {
 }
 
 const AUTH_COOKIE: &str = "kroissant_token";
-
-#[derive(Debug, Clone, FromRow)]
-struct TaggedSeries {
-    id: i64,
-    tmdb_id: i64,
-    name: String,
-    overview: String,
-    first_air_date: Option<String>,
-    poster_path: Option<String>,
-    platform: String,
-    age_range: String,
-    episode_context_count: i64,
-    llm_reason: String,
-    confidence: Option<f64>,
-    source_url: String,
-    tags: Option<String>,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -75,10 +62,15 @@ async fn main() -> Result<()> {
     migrate(&pool).await?;
     seed_fake_data(&pool).await?;
 
+    let content_repo = Arc::new(SqliteContentRepository::new(pool.clone()));
+    let user_repo = Arc::new(SqliteUserRepository::new(pool.clone()));
+
     let state = AppState {
         pool,
         jwt_secret: env::var("JWT_SECRET")
             .unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string()),
+        content_repo,
+        user_repo,
     };
 
     let app = Router::new()
@@ -403,8 +395,8 @@ async fn seed_fake_data(pool: &SqlitePool) -> Result<()> {
 
 async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Html<String>> {
     let user = current_user(&state, &headers).await;
-    let selected = get_contents(&state.pool, Some("youtube"), Some(2)).await?;
-    let moment = get_contents(&state.pool, None, Some(2)).await?;
+    let selected = state.content_repo.get_contents(Some("youtube"), Some(2)).await?;
+    let moment = state.content_repo.get_contents(None, Some(2)).await?;
 
     let body = format!(
         r#"
@@ -466,7 +458,7 @@ async fn home_partial(
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
     let platform = normalize_platform(query.platform.as_deref());
-    let contents = get_contents(&state.pool, Some(platform), Some(2)).await?;
+    let contents = state.content_repo.get_contents(Some(platform), Some(2)).await?;
     Ok(Html(render_home_platform_section(platform, &contents)))
 }
 
@@ -477,8 +469,8 @@ async fn library(
 ) -> AppResult<Html<String>> {
     let user = current_user(&state, &headers).await;
     let active_tag = normalize_tag(query.tag.as_deref());
-    let tags = available_tags(&state.pool).await?;
-    let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
+    let tags = state.content_repo.available_tags().await?;
+    let series = state.content_repo.tagged_series(active_tag.as_deref()).await?;
     let body = format!(
         r#"
         <main class="library-shell">
@@ -504,8 +496,8 @@ async fn library_partial(
     Query(query): Query<PlatformQuery>,
 ) -> AppResult<Html<String>> {
     let active_tag = normalize_tag(query.tag.as_deref());
-    let tags = available_tags(&state.pool).await?;
-    let series = tagged_series(&state.pool, active_tag.as_deref()).await?;
+    let tags = state.content_repo.available_tags().await?;
+    let series = state.content_repo.tagged_series(active_tag.as_deref()).await?;
     Ok(Html(render_library_section(
         active_tag.as_deref(),
         &tags,
@@ -519,7 +511,7 @@ async fn content_detail(
     Path(slug): Path<String>,
 ) -> AppResult<Response> {
     let user = current_user(&state, &headers).await;
-    let Some(content) = get_content_by_slug(&state.pool, &slug).await? else {
+    let Some(content) = state.content_repo.get_by_slug(&slug).await? else {
         return Ok((
             StatusCode::NOT_FOUND,
             Html(render_error_page("Contenu introuvable.")),
@@ -528,10 +520,10 @@ async fn content_detail(
     };
 
     let saved = match &user {
-        Some(user) => is_saved(&state.pool, user.id, content.id).await?,
+        Some(user) => state.user_repo.is_saved(user.id, content.id).await?,
         None => false,
     };
-    let similar = get_similar_contents(&state.pool, &content).await?;
+    let similar = state.content_repo.get_similar(&content).await?;
     let benefit = benefit_for(&content.skill);
 
     let body = format!(
@@ -603,7 +595,7 @@ async fn toggle_save(
     headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> AppResult<Response> {
-    let Some(content) = get_content_by_id(&state.pool, id).await? else {
+    let Some(content) = state.content_repo.get_by_id(id).await? else {
         return Ok((
             StatusCode::NOT_FOUND,
             Html("Contenu introuvable".to_string()),
@@ -615,25 +607,11 @@ async fn toggle_save(
         return Ok(Html(render_save_panel(&content, None, false)).into_response());
     };
 
-    let already_saved = is_saved(&state.pool, user.id, content.id).await?;
+    let already_saved = state.user_repo.is_saved(user.id, content.id).await?;
     if already_saved {
-        sqlx::query("DELETE FROM saved_items WHERE user_id = ? AND content_id = ?")
-            .bind(user.id)
-            .bind(content.id)
-            .execute(&state.pool)
-            .await?;
+        state.user_repo.unsave_item(user.id, content.id).await?;
     } else {
-        sqlx::query(
-            r#"
-            INSERT OR IGNORE INTO saved_items (user_id, content_id, created_at)
-            VALUES (?, ?, ?)
-            "#,
-        )
-        .bind(user.id)
-        .bind(content.id)
-        .bind(Utc::now().to_rfc3339())
-        .execute(&state.pool)
-        .await?;
+        state.user_repo.save_item(user.id, content.id).await?;
     }
 
     Ok(Html(render_save_panel(&content, Some(&user), !already_saved)).into_response())
@@ -644,7 +622,7 @@ async fn go_to_source(
     headers: HeaderMap,
     Path(slug): Path<String>,
 ) -> AppResult<Response> {
-    let Some(content) = get_content_by_slug(&state.pool, &slug).await? else {
+    let Some(content) = state.content_repo.get_by_slug(&slug).await? else {
         return Ok((
             StatusCode::NOT_FOUND,
             Html(render_error_page("Contenu introuvable.")),
@@ -653,17 +631,7 @@ async fn go_to_source(
     };
 
     if let Some(user) = current_user(&state, &headers).await {
-        sqlx::query(
-            r#"
-            INSERT INTO watch_history (user_id, content_id, watched_at)
-            VALUES (?, ?, ?)
-            "#,
-        )
-        .bind(user.id)
-        .bind(content.id)
-        .bind(Utc::now().to_rfc3339())
-        .execute(&state.pool)
-        .await?;
+        state.user_repo.add_to_history(user.id, content.id).await?;
     }
 
     Ok(Redirect::to(&content.source_url).into_response())
@@ -751,10 +719,7 @@ async fn register(
             .into_response());
     }
 
-    let exists: Option<(i64,)> = sqlx::query_as("SELECT id FROM users WHERE email = ?")
-        .bind(&email)
-        .fetch_optional(&state.pool)
-        .await?;
+    let exists = state.user_repo.get_by_email(&email).await?;
 
     if exists.is_some() {
         return Ok((
@@ -770,19 +735,9 @@ async fn register(
     }
 
     let password_hash = hash_password(&form.password)?;
-    let result = sqlx::query(
-        r#"
-        INSERT INTO users (email, password_hash, created_at)
-        VALUES (?, ?, ?)
-        "#,
-    )
-    .bind(&email)
-    .bind(password_hash)
-    .bind(Utc::now().to_rfc3339())
-    .execute(&state.pool)
-    .await?;
+    let user_id = state.user_repo.create_user(&email, &password_hash).await?;
 
-    let token = create_jwt(result.last_insert_rowid(), &email, &state.jwt_secret)?;
+    let token = create_jwt(user_id, &email, &state.jwt_secret)?;
     Ok(redirect_with_cookie(&next, &token))
 }
 
@@ -804,11 +759,7 @@ async fn login(State(state): State<AppState>, Form(form): Form<AuthForm>) -> App
     let email = form.email.trim().to_lowercase();
     let next = clean_next(form.next.clone());
 
-    let record: Option<(i64, String)> =
-        sqlx::query_as("SELECT id, password_hash FROM users WHERE email = ?")
-            .bind(&email)
-            .fetch_optional(&state.pool)
-            .await?;
+    let record = state.user_repo.get_by_email(&email).await?;
 
     let Some((user_id, password_hash)) = record else {
         return Ok((
@@ -854,8 +805,8 @@ async fn account(State(state): State<AppState>, headers: HeaderMap) -> AppResult
         return Ok(Redirect::to("/connexion?next=/compte").into_response());
     };
 
-    let saved = saved_contents(&state.pool, user.id).await?;
-    let history = history_contents(&state.pool, user.id).await?;
+    let saved = state.user_repo.get_saved_contents(user.id).await?;
+    let history = state.user_repo.get_history_contents(user.id).await?;
     let body = format!(
         r#"
         <main class="account-shell">
@@ -903,205 +854,6 @@ async fn account(State(state): State<AppState>, headers: HeaderMap) -> AppResult
     .into_response())
 }
 
-async fn get_contents(
-    pool: &SqlitePool,
-    platform: Option<&str>,
-    limit: Option<i64>,
-) -> Result<Vec<Content>> {
-    let limit = limit.unwrap_or(100);
-    let rows = match platform {
-        Some(platform) => {
-            sqlx::query_as::<_, Content>(
-                "SELECT * FROM contents WHERE platform = ? ORDER BY sort_order LIMIT ?",
-            )
-            .bind(platform)
-            .bind(limit)
-            .fetch_all(pool)
-            .await?
-        }
-        None => {
-            sqlx::query_as::<_, Content>("SELECT * FROM contents ORDER BY sort_order LIMIT ?")
-                .bind(limit)
-                .fetch_all(pool)
-                .await?
-        }
-    };
-    Ok(rows)
-}
-
-async fn get_content_by_slug(pool: &SqlitePool, slug: &str) -> Result<Option<Content>> {
-    Ok(
-        sqlx::query_as::<_, Content>("SELECT * FROM contents WHERE slug = ?")
-            .bind(slug)
-            .fetch_optional(pool)
-            .await?,
-    )
-}
-
-async fn get_content_by_id(pool: &SqlitePool, id: i64) -> Result<Option<Content>> {
-    Ok(
-        sqlx::query_as::<_, Content>("SELECT * FROM contents WHERE id = ?")
-            .bind(id)
-            .fetch_optional(pool)
-            .await?,
-    )
-}
-
-async fn get_similar_contents(pool: &SqlitePool, content: &Content) -> Result<Vec<Content>> {
-    let mut rows = sqlx::query_as::<_, Content>(
-        r#"
-        SELECT * FROM contents
-        WHERE id != ? AND skill = ?
-        ORDER BY sort_order
-        LIMIT 2
-        "#,
-    )
-    .bind(content.id)
-    .bind(&content.skill)
-    .fetch_all(pool)
-    .await?;
-
-    if rows.len() < 2 {
-        let fallback = sqlx::query_as::<_, Content>(
-            r#"
-            SELECT * FROM contents
-            WHERE id != ?
-            ORDER BY sort_order
-            LIMIT ?
-            "#,
-        )
-        .bind(content.id)
-        .bind(2_i64 - rows.len() as i64)
-        .fetch_all(pool)
-        .await?;
-        rows.extend(fallback);
-    }
-
-    Ok(rows)
-}
-
-async fn is_saved(pool: &SqlitePool, user_id: i64, content_id: i64) -> Result<bool> {
-    let exists: Option<(i64,)> =
-        sqlx::query_as("SELECT 1 FROM saved_items WHERE user_id = ? AND content_id = ?")
-            .bind(user_id)
-            .bind(content_id)
-            .fetch_optional(pool)
-            .await?;
-    Ok(exists.is_some())
-}
-
-async fn saved_contents(pool: &SqlitePool, user_id: i64) -> Result<Vec<Content>> {
-    Ok(sqlx::query_as::<_, Content>(
-        r#"
-        SELECT c.* FROM contents c
-        INNER JOIN saved_items s ON s.content_id = c.id
-        WHERE s.user_id = ?
-        ORDER BY s.created_at DESC
-        "#,
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await?)
-}
-
-async fn history_contents(pool: &SqlitePool, user_id: i64) -> Result<Vec<Content>> {
-    Ok(sqlx::query_as::<_, Content>(
-        r#"
-        SELECT c.* FROM contents c
-        INNER JOIN watch_history h ON h.content_id = c.id
-        WHERE h.user_id = ?
-        GROUP BY c.id
-        ORDER BY MAX(h.watched_at) DESC
-        "#,
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await?)
-}
-
-async fn available_tags(pool: &SqlitePool) -> Result<Vec<String>> {
-    let rows: Vec<(String,)> = sqlx::query_as(
-        r#"
-        SELECT t.name
-        FROM tags t
-        INNER JOIN tmdb_series_tags st ON st.tag_id = t.id
-        GROUP BY t.id, t.name
-        ORDER BY t.name
-        "#,
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(rows.into_iter().map(|row| row.0).collect())
-}
-
-async fn tagged_series(pool: &SqlitePool, tag: Option<&str>) -> Result<Vec<TaggedSeries>> {
-    let rows = match tag {
-        Some(tag) => {
-            sqlx::query_as::<_, TaggedSeries>(
-                r#"
-                SELECT
-                    s.id,
-                    s.tmdb_id,
-                    s.name,
-                    s.overview,
-                    s.first_air_date,
-                    s.poster_path,
-                    s.platform,
-                    s.age_range,
-                    s.episode_context_count,
-                    s.llm_reason,
-                    s.confidence,
-                    s.source_url,
-                    GROUP_CONCAT(t.name, ',') AS tags
-                FROM tmdb_series s
-                INNER JOIN tmdb_series_tags selected_st ON selected_st.series_id = s.id
-                INNER JOIN tags selected_t ON selected_t.id = selected_st.tag_id
-                LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
-                LEFT JOIN tags t ON t.id = st.tag_id
-                WHERE selected_t.name = ?
-                GROUP BY s.id
-                ORDER BY s.name
-                LIMIT 100
-                "#,
-            )
-            .bind(tag)
-            .fetch_all(pool)
-            .await?
-        }
-        None => {
-            sqlx::query_as::<_, TaggedSeries>(
-                r#"
-                SELECT
-                    s.id,
-                    s.tmdb_id,
-                    s.name,
-                    s.overview,
-                    s.first_air_date,
-                    s.poster_path,
-                    s.platform,
-                    s.age_range,
-                    s.episode_context_count,
-                    s.llm_reason,
-                    s.confidence,
-                    s.source_url,
-                    GROUP_CONCAT(t.name, ',') AS tags
-                FROM tmdb_series s
-                LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
-                LEFT JOIN tags t ON t.id = st.tag_id
-                GROUP BY s.id
-                ORDER BY s.name
-                LIMIT 100
-                "#,
-            )
-            .fetch_all(pool)
-            .await?
-        }
-    };
-
-    Ok(rows)
-}
-
 async fn current_user(state: &AppState, headers: &HeaderMap) -> Option<User> {
     let token = cookie_value(headers, AUTH_COOKIE)?;
     let claims = decode::<Claims>(
@@ -1112,12 +864,7 @@ async fn current_user(state: &AppState, headers: &HeaderMap) -> Option<User> {
     .ok()?
     .claims;
 
-    sqlx::query_as::<_, User>("SELECT id, email FROM users WHERE id = ?")
-        .bind(claims.sub)
-        .fetch_optional(&state.pool)
-        .await
-        .ok()
-        .flatten()
+    state.user_repo.get_by_id(claims.sub).await.ok().flatten()
 }
 
 fn cookie_value(headers: &HeaderMap, name: &str) -> Option<String> {
@@ -1446,7 +1193,7 @@ fn render_home_platform_section(active: &str, contents: &[Content]) -> String {
 fn render_library_section(
     active_tag: Option<&str>,
     tags: &[String],
-    series: &[TaggedSeries],
+    series: &[kroissant::models::TaggedSeries],
 ) -> String {
     format!(
         r#"
