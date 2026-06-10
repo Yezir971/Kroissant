@@ -65,13 +65,12 @@ async fn main() -> Result<()> {
     let content_repo = Arc::new(SqliteContentRepository::new(pool.clone()));
     let user_repo = Arc::new(SqliteUserRepository::new(pool.clone()));
 
-    let state = AppState {
+    let state = AppState::new(
         pool,
-        jwt_secret: env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string()),
+        env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string()),
         content_repo,
         user_repo,
-    };
+    );
 
     let app = Router::new()
         .route("/", get(home))
