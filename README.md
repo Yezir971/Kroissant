@@ -76,8 +76,9 @@ Lancement du conteneur :
 ```bash
 docker run --rm \
   -p 3000:3000 \
+  --user "$(id -u):$(id -g)" \
   -e JWT_SECRET=change-me-for-local-docker \
-  -v kroissant-data:/app/data \
+  -v "$(pwd)/data:/app/data" \
   kroissant:dev
 ```
 
@@ -92,8 +93,9 @@ Si le serveur local `cargo run` occupe deja le port `3000`, utiliser un autre po
 ```bash
 docker run --rm \
   -p 3001:3000 \
+  --user "$(id -u):$(id -g)" \
   -e JWT_SECRET=change-me-for-local-docker \
-  -v kroissant-data:/app/data \
+  -v "$(pwd)/data:/app/data" \
   kroissant:dev
 ```
 
@@ -108,13 +110,13 @@ http://127.0.0.1:3001
 Demarrer :
 
 ```bash
-docker compose up --build
+UID=$(id -u) GID=$(id -g) docker compose up --build
 ```
 
 Demarrer en arriere-plan :
 
 ```bash
-docker compose up --build -d
+UID=$(id -u) GID=$(id -g) docker compose up --build -d
 ```
 
 Voir les logs :
@@ -129,13 +131,15 @@ Arreter :
 docker compose down
 ```
 
-Supprimer aussi le volume SQLite :
+Repartir de zero avec la base locale :
 
 ```bash
-docker compose down -v
+docker compose down
+rm data/kroissant.sqlite
+docker compose up --build
 ```
 
-Compose expose le service sur `http://127.0.0.1:3000` et persiste la base dans le volume Docker nomme `kroissant-data`.
+Compose expose le service sur `http://127.0.0.1:3000` et monte le dossier local `./data` dans `/app/data`. Le conteneur utilise donc directement `data/kroissant.sqlite` du projet.
 
 ## Commandes utiles
 
@@ -253,10 +257,11 @@ Le `Dockerfile` est multi-stage :
 5. Creation d'un utilisateur systeme non-root `app`.
 6. Copie du binaire release sous `/usr/local/bin/kroissant`.
 7. Copie des assets `static/`.
-8. Creation du dossier `/app/data`.
-9. Demarrage avec `CMD ["kroissant"]`.
+8. Copie de la base locale `data/kroissant.sqlite`.
+9. Creation du dossier `/app/data`.
+10. Demarrage avec `CMD ["kroissant"]`.
 
-Le conteneur n'embarque pas la base locale `data/kroissant.sqlite` grace a `.dockerignore`. Au premier demarrage, l'application cree `/app/data/kroissant.sqlite`, execute les migrations, puis seed les contenus.
+L'image embarque la base locale presente dans `data/` au moment du build. En Docker Compose, cette base embarquee est remplacee par le bind mount `./data:/app/data`, ce qui garantit que Docker utilise la meme SQLite que le projet local. Compose lance aussi le conteneur avec l'UID/GID local pour garder les droits d'ecriture SQLite sur le fichier monte.
 
 Variables definies dans l'image :
 

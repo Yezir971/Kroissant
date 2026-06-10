@@ -3,9 +3,9 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
 };
+use ax_extract::{Form, Path, Query, State};
 use axum::{
-    Form, Router,
-    extract::{Path, Query, State},
+    Router,
     http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{Html, IntoResponse, Redirect, Response},
     routing::{get, post},
@@ -14,7 +14,6 @@ use chrono::{Duration, Utc};
 use html_escape::{encode_double_quoted_attribute, encode_text};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use rand_core::OsRng;
-use serde::{Deserialize, Serialize};
 use sqlx::{
     FromRow, SqlitePool,
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
@@ -23,98 +22,15 @@ use std::{env, net::SocketAddr, str::FromStr};
 use tokio::{fs, net::TcpListener};
 use tower_http::services::ServeDir;
 
+use kroissant::{AppState, AppError, AppResult};
+use kroissant::models::*;
+
+// Alias pour faciliter la migration progressive
+mod ax_extract {
+    pub use axum::extract::{Form, Path, Query, State};
+}
+
 const AUTH_COOKIE: &str = "kroissant_token";
-
-#[derive(Clone)]
-struct AppState {
-    pool: SqlitePool,
-    jwt_secret: String,
-}
-
-#[derive(Debug)]
-struct AppError(anyhow::Error);
-
-type AppResult<T> = std::result::Result<T, AppError>;
-
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(error: E) -> Self {
-        Self(error.into())
-    }
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        eprintln!("application error: {:?}", self.0);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Html(render_error_page("Une erreur est survenue.")),
-        )
-            .into_response()
-    }
-}
-
-#[derive(Debug, Clone, FromRow, Serialize)]
-struct Content {
-    id: i64,
-    slug: String,
-    title: String,
-    platform: String,
-    duration: String,
-    age_range: String,
-    description: String,
-    skill: String,
-    image_url: String,
-    source_url: String,
-}
-
-impl Content {
-    fn platform_label(&self) -> &'static str {
-        platform_label(&self.platform)
-    }
-}
-
-#[derive(Debug, Clone, FromRow)]
-struct User {
-    id: i64,
-    email: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: i64,
-    email: String,
-    exp: usize,
-}
-
-#[derive(Debug, Deserialize)]
-struct PlatformQuery {
-    platform: Option<String>,
-    tag: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct AuthQuery {
-    next: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct AuthForm {
-    email: String,
-    password: String,
-    next: Option<String>,
-}
-
-#[derive(Clone)]
-struct Benefit {
-    key: &'static str,
-    label: &'static str,
-    summary: &'static str,
-    detail: &'static str,
-    source: &'static str,
-}
 
 #[derive(Debug, Clone, FromRow)]
 struct TaggedSeries {
@@ -494,7 +410,7 @@ async fn home(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Ht
         r#"
         <section class="hero">
             <div class="hero-inner">
-                <h1>Des dessins animes<br>qui developpent vraiment<br>votre enfant.</h1>
+                <h1>Des dessins animés choisis pour eux. Une sérénité retrouvée pour vous.</h1>
                 <p>Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
                 <div class="hero-actions">
                     <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
@@ -1766,11 +1682,6 @@ fn render_save_panel(content: &Content, user: Option<&User>, saved: bool) -> Str
     }
 }
 
-#[derive(Copy, Clone)]
-enum AuthMode {
-    Register,
-    Login,
-}
 
 fn render_auth_page(
     mode: AuthMode,
