@@ -19,7 +19,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/creer-une-app-complete-en-rust /usr/local/bin/kroissant
+COPY --from=builder /app/target/release/kroissant /usr/local/bin/kroissant
 COPY static ./static
 COPY data ./data
 

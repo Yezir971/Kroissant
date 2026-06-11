@@ -44,7 +44,10 @@ async fn main() -> Result<()> {
     let state = AppState::new(pool, jwt_secret, content_repo, user_repo, auth_service, content_service);
 
     // Démarrage du serveur
-    let addr = SocketAddr::from(([127, 0, 0, 1], env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000)));
+    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let port = env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000);
+    let addr: SocketAddr = format!("{host}:{port}").parse().context("adresse d'ecoute invalide")?;
+
     let listener = TcpListener::bind(addr).await?;
     println!("Kroissant dev server: http://{addr}");
     axum::serve(listener, routes::create_router(state)).await?;
