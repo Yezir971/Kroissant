@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     image: kroissant:dev
     container_name: kroissant-dev
+    user: "${UID:-1000}:${GID:-1000}"
     environment:
       HOST: 0.0.0.0
       PORT: 3000
@@ -14,8 +15,5 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - kroissant-data:/app/data
+      - ./data:/app/data
     restart: unless-stopped
-
-volumes:
-  kroissant-data:
