@@ -1,9 +1,9 @@
 //! Configuration du routage et des middlewares.
 use axum::{
-    routing::{get, post},
+    routing::{get, post, get_service},
     Router,
 };
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use tower_http::{services::{ServeDir, ServeFile}, trace::TraceLayer};
 use crate::app_state::AppState;
 use crate::handlers;
 
@@ -13,6 +13,10 @@ pub fn create_router(state: AppState) -> Router {
         // Accueil & Général
         .route("/", get(handlers::home::home))
         .route("/science", get(handlers::home::science))
+        
+        // PWA
+        .route("/manifest.json", get_service(ServeFile::new("static/manifest.json")))
+        .route("/sw.js", get_service(ServeFile::new("static/sw.js")))
         
         // Bibliothèque
         .route("/bibliotheque", get(handlers::library::library))
