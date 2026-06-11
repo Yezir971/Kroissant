@@ -118,9 +118,9 @@ pub fn render_tag_search(active_tag: Option<&str>, tags: &[String]) -> String {
     format!(
         r#"
         <form class="tag-search-form" method="get" action="/bibliotheque">
-            <label for="tag-search">Chercher par tag ou titre</label>
+            <label for="tag-search">Chercher par titre ou tag</label>
             <div>
-                <input id="tag-search" name="tag" value="{}" placeholder="Bluey, science, resilience...">
+                <input id="tag-search" name="tag" value="{}" placeholder="Bluey, empathie, resilience...">
                 <button class="button button-secondary" type="submit">Chercher</button>
                 <a class="button button-light" href="/bibliotheque">Effacer</a>
             </div>
