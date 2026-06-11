@@ -1,0 +1,17 @@
+{
+  "name": "Kroissant",
+  "short_name": "Kroissant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f2ec",
+  "theme_color": "#d06b12",
+  "description": "Curation de contenus developpementaux pour enfants.",
+  "icons": [
+    {
+      "src": "/static/img/bluey.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

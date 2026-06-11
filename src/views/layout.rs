@@ -45,14 +45,28 @@ pub fn render_page_with_class(
     };
 
     format!(
-        r#"<!doctype html>
+        r##"<!doctype html>
         <html lang="fr">
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>{}</title>
             <link rel="stylesheet" href="/static/app.css">
+            <link rel="manifest" href="/manifest.json">
+            <meta name="theme-color" content="#d06b12">
+            <meta name="apple-mobile-web-app-capable" content="yes">
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+            <meta name="apple-mobile-web-app-title" content="Kroissant">
+            <link rel="apple-touch-icon" href="/static/img/bluey.svg">
             <script src="/static/htmx.min.js" defer></script>
+            <script src="/static/pwa-install.js" defer></script>
+            <script>
+                if ('serviceWorker' in navigator) {{
+                    window.addEventListener('load', () => {{
+                        navigator.serviceWorker.register('/sw.js');
+                    }});
+                }}
+            </script>
         </head>
         <body class="{}">
             <header class="topbar">
@@ -67,7 +81,7 @@ pub fn render_page_with_class(
                 <a class="footer-link" href="/science">Comment sont choisis nos contenus</a>
             </footer>
         </body>
-        </html>"#,
+        </html>"##,
         h(title),
         a(page_class),
         left,

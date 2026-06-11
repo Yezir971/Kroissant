@@ -13,6 +13,7 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
                 <div class="hero-actions">
                     <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
                     <a class="button button-outline-light" href="/science">Comment sont choisis nos contenus</a>
+                    <button id="install-button" class="button button-primary" style="display: none;">Installer l'application</button>
                 </div>
             </div>
         </section>
