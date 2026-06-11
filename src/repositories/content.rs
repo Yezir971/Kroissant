@@ -124,7 +124,8 @@ impl ContentRepository for SqliteContentRepository {
 
     async fn tagged_series(&self, tag: Option<&str>) -> AppResult<Vec<TaggedSeries>> {
         let rows = match tag {
-            Some(tag) => {
+            Some(search) => {
+                let title_search = format!("%{}%", search);
                 sqlx::query_as::<_, TaggedSeries>(
                     r#"
                     SELECT
@@ -142,17 +143,26 @@ impl ContentRepository for SqliteContentRepository {
                         s.source_url,
                         GROUP_CONCAT(t.name, ',') AS tags
                     FROM tmdb_series s
-                    INNER JOIN tmdb_series_tags selected_st ON selected_st.series_id = s.id
-                    INNER JOIN tags selected_t ON selected_t.id = selected_st.tag_id
                     LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
                     LEFT JOIN tags t ON t.id = st.tag_id
-                    WHERE selected_t.name = ?
+                    WHERE
+                        s.name LIKE ?
+                        OR s.original_name LIKE ?
+                        OR EXISTS (
+                            SELECT 1
+                            FROM tmdb_series_tags selected_st
+                            INNER JOIN tags selected_t ON selected_t.id = selected_st.tag_id
+                            WHERE selected_st.series_id = s.id
+                                AND selected_t.name = ?
+                        )
                     GROUP BY s.id
                     ORDER BY s.name
                     LIMIT 100
                     "#,
                 )
-                .bind(tag)
+                .bind(&title_search)
+                .bind(&title_search)
+                .bind(search)
                 .fetch_all(&self.pool)
                 .await?
             }

@@ -50,6 +50,10 @@ async fn test_content_repository() {
     let series = repo.tagged_series(Some("tag1")).await.unwrap();
     assert_eq!(series.len(), 1);
     assert_eq!(series[0].name, "Series 1");
+
+    let series_by_title = repo.tagged_series(Some("ries 1")).await.unwrap();
+    assert_eq!(series_by_title.len(), 1);
+    assert_eq!(series_by_title[0].name, "Series 1");
 }
 
 #[tokio::test]

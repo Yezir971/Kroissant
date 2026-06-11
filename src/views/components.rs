@@ -85,7 +85,7 @@ pub fn render_library_section(
         r#"
         <div class="section-heading library-title">
             <h1>Series categorisees par IA</h1>
-            <p>Recherche par tags calcules au niveau serie avec le contexte limite du JSON.</p>
+            <p>Recherche par tags ou par titres, avec des categories calculees au niveau serie.</p>
         </div>
         {}
         <div class="card-grid library-grid ai-series-grid">
@@ -118,9 +118,9 @@ pub fn render_tag_search(active_tag: Option<&str>, tags: &[String]) -> String {
     format!(
         r#"
         <form class="tag-search-form" method="get" action="/bibliotheque">
-            <label for="tag-search">Chercher par tag</label>
+            <label for="tag-search">Chercher par titre ou tag</label>
             <div>
-                <input id="tag-search" name="tag" value="{}" placeholder="empathie, science, resilience...">
+                <input id="tag-search" name="tag" value="{}" placeholder="Bluey, empathie, resilience...">
                 <button class="button button-secondary" type="submit">Chercher</button>
                 <a class="button button-light" href="/bibliotheque">Effacer</a>
             </div>
@@ -153,7 +153,7 @@ pub fn render_cards_or_empty(contents: &[Content], empty: &str) -> String {
 pub fn render_tagged_series_or_empty(series: &[TaggedSeries], active_tag: Option<&str>) -> String {
     if series.is_empty() {
         let message = match active_tag {
-            Some(tag) => format!("Aucune serie categorisee avec le tag \"{}\".", h(tag)),
+            Some(tag) => format!("Aucune serie trouvee pour \"{}\".", h(tag)),
             None => "Aucune serie categorisee pour l'instant. Lancez le script TMDb/Ollama pour alimenter cette section.".to_string(),
         };
         format!(r#"<p class="empty-state">{}</p>"#, message)
