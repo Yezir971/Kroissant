@@ -35,3 +35,8 @@ pub async fn science(AuthUser(user): AuthUser, State(state): State<AppState>) ->
     let benefits = state.content_service.get_benefits();
     Ok(Html(views::render_science(&user, &benefits)))
 }
+
+/// Handler pour les routes non trouvées (404).
+pub async fn not_found(AuthUser(user): AuthUser) -> Html<String> {
+    Html(views::render_404(&user))
+}

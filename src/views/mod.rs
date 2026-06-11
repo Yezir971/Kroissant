@@ -20,4 +20,4 @@ pub use content_detail::render_content_detail;
 pub use science::render_science;
 pub use auth::render_auth_page;
 pub use account::render_account;
-pub use error::render_error_page;
+pub use error::{render_error_page, render_404};
