@@ -71,12 +71,16 @@ pub fn render_page_with_class(
         <body class="{}">
             <header class="topbar">
                 <div class="topbar-left">{}</div>
-                <a class="brand" href="/">Kroissant</a>
+                <a class="brand" href="/" aria-label="Accueil Ploopy">
+                    <img src="/static/img/ploopy.svg" alt="Ploopy">
+                </a>
                 <nav class="topbar-nav">{}</nav>
             </header>
             {}
             <footer class="site-footer">
-                <a class="footer-brand" href="/">Kroissant</a>
+                <a class="footer-brand" href="/">
+                                    <img src="/static/img/ploopy.svg" alt="Ploopy">
+                                    </a>
                 <p>© 2026 Kroissant - Tous droits reserves.</p>
                 <a class="footer-link" href="/science">Comment sont choisis nos contenus</a>
             </footer>

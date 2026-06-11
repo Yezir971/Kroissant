@@ -1,10 +1,10 @@
-const CACHE_NAME = 'kroissant-v1';
+const CACHE_NAME = 'kroissant-v2';
 const ASSETS_TO_CACHE = [
-  '/',
   '/static/app.css',
   '/static/htmx.min.js',
   '/static/img/bluey.svg',
-  '/static/img/puffin-rock.svg'
+  '/static/img/puffin-rock.svg',
+  '/static/img/ploopy.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -30,6 +30,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);

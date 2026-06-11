@@ -79,6 +79,11 @@ input {
   font-size: 1.05rem;
 }
 
+.brand img {
+  width: auto;
+  height: 38px;
+}
+
 .topbar-left,
 .topbar-nav {
   min-width: 0;
