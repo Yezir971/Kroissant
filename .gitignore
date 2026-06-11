@@ -4,3 +4,9 @@ pdf-review/
 .env
 *.log
 .DS_Store
+ARCHITECTURE.md
+CHANGELOG.md
+CONVENTION.md
+GEMINI.md
+TASKS.md
+AUDIT.md
