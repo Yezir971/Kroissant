@@ -5,7 +5,7 @@ use crate::views::layout::render_page;
 
 pub fn render_library(
     user: &Option<User>,
-    active_tag: Option<&str>,
+    query: &crate::models::PlatformQuery,
     tags: &[String],
     series: &[TaggedSeries],
 ) -> String {
@@ -17,7 +17,7 @@ pub fn render_library(
             </section>
         </main>
         "#,
-        render_library_section(active_tag, tags, series)
+        render_library_section(query, tags, series)
     );
 
     render_page(

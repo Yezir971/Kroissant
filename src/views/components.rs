@@ -78,60 +78,118 @@ pub fn render_home_platform_section(_active: &str, contents: &[Content]) -> Stri
 }
 
 pub fn render_library_section(
-    active_tag: Option<&str>,
+    query: &crate::models::PlatformQuery,
     tags: &[String],
     series: &[TaggedSeries],
 ) -> String {
     format!(
-        r#"
+        r##"
         <div class="section-heading library-title">
-            <h1>Series categorisees par IA</h1>
-            <p>Recherche par tags ou par titres, avec des categories calculees au niveau serie.</p>
+            <h1>Séries catégorisées par IA</h1>
+            <p>Recherche par tags ou par titres, avec des catégories calculées au niveau série.</p>
         </div>
         {}
         <div class="card-grid library-grid ai-series-grid">
             {}
         </div>
-        "#,
-        render_tag_search(active_tag, tags),
-        render_tagged_series_or_empty(series, active_tag),
+        "##,
+        render_search_and_filters(query, tags),
+        render_tagged_series_or_empty(series, query.tag.as_deref().or(query.skill.as_deref())),
     )
 }
 
-pub fn render_tag_search(active_tag: Option<&str>, tags: &[String]) -> String {
-    let value = active_tag.unwrap_or("");
-    let mut chips = String::new();
+pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[String]) -> String {
+    let tag_value = query.tag.as_deref().unwrap_or("");
+    let active_age = query.age.as_deref().unwrap_or("all");
+    let active_platform = query.platform.as_deref().unwrap_or("all");
+    let active_skill = query.skill.as_deref().unwrap_or("all");
 
+    let mut age_filters = String::new();
+    for (val, label) in [("all", "Tout"), ("3-7 ans", "3-7 ans"), ("7-10 ans", "7-10 ans")] {
+        age_filters.push_str(&format!(
+            r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('age', '{}')">{}</button>"#,
+            if active_age == val { "active" } else { "" },
+            val,
+            label
+        ));
+    }
+
+    let mut skill_filters = String::new();
+    skill_filters.push_str(&format!(
+        r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('skill', 'all')">Tout</button>"#,
+        if active_skill == "all" { "active" } else { "" }
+    ));
     for tag in tags {
-        let href = format!("/bibliotheque?tag={}", a(tag));
-        chips.push_str(&format!(
-            r#"<a class="tag-chip {}" href="{}">{}</a>"#,
-            if active_tag == Some(tag.as_str()) {
-                "active"
-            } else {
-                ""
-            },
-            href,
+        skill_filters.push_str(&format!(
+            r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('skill', '{}')">{}</button>"#,
+            if active_skill == tag { "active" } else { "" },
+            tag,
             h(tag)
         ));
     }
 
+    let mut platform_filters = String::new();
+    for (val, label) in [("all", "Tout"), ("youtube", "Youtube"), ("netflix", "Netflix"), ("disney", "Disney +")] {
+        platform_filters.push_str(&format!(
+            r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('platform', '{}')">{}</button>"#,
+            if active_platform == val { "active" } else { "" },
+            val,
+            label
+        ));
+    }
+
     format!(
-        r#"
-        <form class="tag-search-form" method="get" action="/bibliotheque">
-            <label for="tag-search">Chercher par titre ou tag</label>
-            <div>
-                <input id="tag-search" name="tag" value="{}" placeholder="Bluey, empathie, resilience...">
-                <button class="button button-secondary" type="submit">Chercher</button>
-                <a class="button button-light" href="/bibliotheque">Effacer</a>
+        r##"
+        <div class="library-controls">
+            <form id="library-filter-form" class="search-filter-row" method="get" action="/bibliotheque" hx-get="/partials/library" hx-target="#library-section" hx-push-url="true" hx-trigger="submit, filterChanged">
+                <input type="hidden" name="age" id="filter-age" value="{}">
+                <input type="hidden" name="platform" id="filter-platform" value="{}">
+                <input type="hidden" name="skill" id="filter-skill" value="{}">
+                
+                <div class="search-input-wrapper">
+                    <span class="search-icon-left">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </span>
+                    <input type="text" name="tag" value="{}" placeholder="Recherche" autocomplete="off" hx-trigger="keyup changed delay:500ms" hx-get="/partials/library" hx-target="#library-section">
+                    <span class="mic-icon-right">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    </span>
+                </div>
+                
+                <button type="button" class="filter-button" onclick="document.getElementById('filter-panel').classList.toggle('hidden')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                    Filtres
+                </button>
+            </form>
+            
+            <div id="filter-panel" class="filter-panel hidden">
+                <div class="filter-group">
+                    {}
+                </div>
+                <div class="filter-group">
+                    {}
+                </div>
+                <div class="filter-group">
+                    {}
+                </div>
             </div>
-        </form>
-        <div class="tag-chip-row">
-            {}
+            
+            <script>
+                function setLibraryFilter(name, value) {{
+                    document.getElementById('filter-' + name).value = value;
+                    const form = document.getElementById('library-filter-form');
+                    htmx.trigger(form, 'filterChanged');
+                }}
+            </script>
         </div>
-        "#,
-        a(value),
-        chips
+        "##,
+        a(active_age),
+        a(active_platform),
+        a(active_skill),
+        a(tag_value),
+        age_filters,
+        skill_filters,
+        platform_filters
     )
 }
 
