@@ -28,6 +28,50 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
                 {}
             </section>
 
+            <section class="how-it-works">
+                <div class="how-it-works-grid">
+                    <div class="how-info">
+                        <h2>Comment ça marche</h2>
+                        <p>Chaque contenu est évalué selon des critères pédagogiques avant d'apparaître dans la bibliothèque.</p>
+                        <div class="testimonials">
+                            <p>"tout est bien expliqué, plateforme dédiée aux enfants"</p>
+                            <p>"c'est bien explicite, pas du tout complexe, facile d'utilisation"</p>
+                        </div>
+                        <a href="/science" class="button button-primary">Découvrir notre méthode</a>
+                    </div>
+                    <div class="how-steps">
+                        <div class="step-item">
+                            <span class="step-num">1</span>
+                            <div>
+                                <h3>Se connecter</h3>
+                                <p>YouTube, Netflix ou Disney+</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-num">2</span>
+                            <div>
+                                <h3>Choisir un dessin animé</h3>
+                                <p>YouTube, Netflix ou Disney+</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-num">3</span>
+                            <div>
+                                <h3>Lancer le dessin animé</h3>
+                                <p>YouTube, Netflix ou Disney+</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-num">4</span>
+                            <div>
+                                <h3>Profiter de votre moment</h3>
+                                <p>YouTube, Netflix ou Disney+</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="section-block">
                 <div class="section-heading">
                     <h2>Selection du moment</h2>
@@ -44,14 +88,6 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
             <span>Certains developpent autant que des activites structurees</span>
         </section>
 
-        <section class="how-it-works">
-            <h2>Comment ca fonctionne</h2>
-            <div class="steps">
-                <div><strong>1</strong><h3>Choisissez votre plateforme</h3><p>YouTube, Netflix ou Disney+</p></div>
-                <div><strong>2</strong><h3>Parcourez la bibliotheque</h3><p>Chaque contenu explique ce qu'il developpe</p></div>
-                <div><strong>3</strong><h3>Redirige en 1 clic</h3><p>Directement sur la plateforme</p></div>
-            </div>
-        </section>
         "#,
         render_home_platform_section("youtube", selected),
         render_cards(moment),
@@ -59,3 +95,6 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
 
     render_page("Kroissant", "Accueil", None, user, body)
 }
+
+
+
