@@ -61,17 +61,18 @@ pub fn render_platform_tabs(active: &str, context: &str) -> String {
     tabs
 }
 
-pub fn render_home_platform_section(active: &str, contents: &[Content]) -> String {
+pub fn render_home_platform_section(_active: &str, contents: &[Content]) -> String {
     format!(
         r#"
         <div id="home-platform">
-            {}
+            <div class="platform-tabs home-tabs">
+                <a class="text-link home-see-all" href="/bibliotheque">Voir tout</a>
+            </div>
             <div id="platform-results" class="card-grid two-cols">
                 {}
             </div>
         </div>
         "#,
-        render_platform_tabs(active, "home"),
         render_cards(contents)
     )
 }
