@@ -539,25 +539,109 @@ input {
   gap: 8px;
 }
 
-.tag-chip,
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--brand-deep);
-  font-size: 0.78rem;
-  font-weight: 800;
+.hidden {
+  display: none !important;
 }
 
-.tag-chip.active,
-.tag-chip:hover {
-  border-color: var(--brand);
-  background: var(--brand);
+.library-controls {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 12px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 44px;
+  border: 1px solid #d6c9bd;
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+}
+
+.search-icon-left,
+.mic-icon-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #756d65;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon-left {
+  left: 14px;
+}
+
+.mic-icon-right {
+  right: 14px;
+}
+
+.filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  background: white;
+  border: 1px solid #d6c9bd;
+  border-radius: 8px;
+  color: #25211d;
+  font-family: var(--font-title);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.filter-button svg {
+  color: #756d65;
+}
+
+.filter-panel {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  background: #ac6842;
+  border-radius: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-chip {
+  min-height: 38px;
+  padding: 0 20px;
+  background: white;
+  border: 0;
+  border-radius: 8px;
+  color: #25211d;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  background: #d06b12;
   color: white;
+}
+
+@media (max-width: 640px) {
+  .search-filter-row {
+    flex-direction: column;
+  }
 }
 
 .ai-series-grid {

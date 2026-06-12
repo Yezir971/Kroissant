@@ -16,7 +16,7 @@ pub trait ContentRepository: Send + Sync {
     async fn get_similar(&self, content: &Content) -> AppResult<Vec<Content>>;
 
     async fn available_tags(&self) -> AppResult<Vec<String>>;
-    async fn tagged_series(&self, tag: Option<&str>) -> AppResult<Vec<TaggedSeries>>;
+    async fn tagged_series(&self, query: &crate::models::PlatformQuery) -> AppResult<Vec<TaggedSeries>>;
 }
 
 pub struct SqliteContentRepository {
@@ -122,79 +122,77 @@ impl ContentRepository for SqliteContentRepository {
         Ok(rows.into_iter().map(|row| row.0).collect())
     }
 
-    async fn tagged_series(&self, tag: Option<&str>) -> AppResult<Vec<TaggedSeries>> {
-        let rows = match tag {
-            Some(search) => {
-                let title_search = format!("%{}%", search);
-                sqlx::query_as::<_, TaggedSeries>(
-                    r#"
-                    SELECT
-                        s.id,
-                        s.tmdb_id,
-                        s.name,
-                        s.overview,
-                        s.first_air_date,
-                        s.poster_path,
-                        s.platform,
-                        s.age_range,
-                        s.episode_context_count,
-                        s.llm_reason,
-                        s.confidence,
-                        s.source_url,
-                        GROUP_CONCAT(t.name, ',') AS tags
-                    FROM tmdb_series s
-                    LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
-                    LEFT JOIN tags t ON t.id = st.tag_id
-                    WHERE
-                        s.name LIKE ?
-                        OR s.original_name LIKE ?
-                        OR EXISTS (
-                            SELECT 1
-                            FROM tmdb_series_tags selected_st
-                            INNER JOIN tags selected_t ON selected_t.id = selected_st.tag_id
-                            WHERE selected_st.series_id = s.id
-                                AND selected_t.name = ?
-                        )
-                    GROUP BY s.id
-                    ORDER BY s.name
-                    LIMIT 100
-                    "#,
-                )
-                .bind(&title_search)
-                .bind(&title_search)
-                .bind(search)
-                .fetch_all(&self.pool)
-                .await?
+    async fn tagged_series(&self, query: &crate::models::PlatformQuery) -> AppResult<Vec<TaggedSeries>> {
+        let mut query_builder: sqlx::QueryBuilder<sqlx::Sqlite> = sqlx::QueryBuilder::new(
+            r#"
+            SELECT
+                s.id,
+                s.tmdb_id,
+                s.name,
+                s.overview,
+                s.first_air_date,
+                s.poster_path,
+                s.platform,
+                s.age_range,
+                s.episode_context_count,
+                s.llm_reason,
+                s.confidence,
+                s.source_url,
+                GROUP_CONCAT(t.name, ',') AS tags
+            FROM tmdb_series s
+            LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
+            LEFT JOIN tags t ON t.id = st.tag_id
+            "#
+        );
+
+        query_builder.push(" WHERE 1=1 ");
+
+        // Filtre de recherche textuelle (Nom ou Tag par défaut si on veut garder la polyvalence)
+        if let Some(search) = query.tag.as_deref() {
+            if !search.is_empty() && search != "all" {
+                let pattern = format!("%{}%", search);
+                query_builder.push(" AND (s.name LIKE ");
+                query_builder.push_bind(pattern.clone());
+                query_builder.push(" OR s.original_name LIKE ");
+                query_builder.push_bind(pattern);
+                // On peut aussi chercher dans les tags via le champ texte pour plus de flexibilité
+                query_builder.push(" OR EXISTS (SELECT 1 FROM tmdb_series_tags search_st INNER JOIN tags search_t ON search_t.id = search_st.tag_id WHERE search_st.series_id = s.id AND search_t.name LIKE ");
+                query_builder.push_bind(format!("%{}%", search));
+                query_builder.push(")) ");
             }
-            None => {
-                sqlx::query_as::<_, TaggedSeries>(
-                    r#"
-                    SELECT
-                        s.id,
-                        s.tmdb_id,
-                        s.name,
-                        s.overview,
-                        s.first_air_date,
-                        s.poster_path,
-                        s.platform,
-                        s.age_range,
-                        s.episode_context_count,
-                        s.llm_reason,
-                        s.confidence,
-                        s.source_url,
-                        GROUP_CONCAT(t.name, ',') AS tags
-                    FROM tmdb_series s
-                    LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
-                    LEFT JOIN tags t ON t.id = st.tag_id
-                    GROUP BY s.id
-                    ORDER BY s.name
-                    LIMIT 100
-                    "#,
-                )
-                .fetch_all(&self.pool)
-                .await?
+        }
+
+        // Filtre par Skill (Puce de compétence)
+        if let Some(skill) = query.skill.as_deref() {
+            if !skill.is_empty() && skill != "all" {
+                query_builder.push(" AND EXISTS (SELECT 1 FROM tmdb_series_tags tst INNER JOIN tags tt ON tt.id = tst.tag_id WHERE tst.series_id = s.id AND tt.name = ");
+                query_builder.push_bind(skill);
+                query_builder.push(") ");
             }
-        };
+        }
+
+        // Filtre par Plateforme
+        if let Some(platform) = query.platform.as_deref() {
+            if !platform.is_empty() && platform != "all" {
+                query_builder.push(" AND s.platform = ");
+                query_builder.push_bind(platform);
+            }
+        }
+
+        // Filtre par Âge
+        if let Some(age) = query.age.as_deref() {
+            if !age.is_empty() && age != "all" {
+                query_builder.push(" AND s.age_range = ");
+                query_builder.push_bind(age);
+            }
+        }
+
+        query_builder.push(" GROUP BY s.id ORDER BY s.name LIMIT 100 ");
+
+        let rows = query_builder
+            .build_query_as::<TaggedSeries>()
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(rows)
     }
