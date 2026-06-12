@@ -22,7 +22,7 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
             <section class="section-block">
                 <div class="section-heading split-heading">
                     <div>
-                        <h2>Choisissez votre plateforme</h2>
+                        <h2>Choisissez votre contenu</h2>
                     </div>
                 </div>
                 {}

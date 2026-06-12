@@ -41,5 +41,6 @@ pub fn create_router(state: AppState) -> Router {
         
         // Middlewares globaux
         .layer(TraceLayer::new_for_http())
+        .fallback(handlers::home::not_found)
         .with_state(state)
 }
