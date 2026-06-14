@@ -65,9 +65,6 @@ pub fn render_home_platform_section(_active: &str, contents: &[Content]) -> Stri
     format!(
         r#"
         <div id="home-platform">
-            <div class="platform-tabs home-tabs">
-                <a class="text-link home-see-all" href="/bibliotheque">Voir tout</a>
-            </div>
             <div id="platform-results" class="card-grid two-cols">
                 {}
             </div>

@@ -24,6 +24,9 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
                     <div>
                         <h2>Choisissez votre contenu</h2>
                     </div>
+                    <div>
+                        <a class="text-link home-see-all" href="/bibliotheque">Voir tout</a>
+                    </div>
                 </div>
                 {}
             </section>

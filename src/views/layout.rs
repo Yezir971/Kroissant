@@ -81,7 +81,7 @@ pub fn render_page_with_class(
                 <a class="footer-brand" href="/">
                                     <img src="/static/img/ploopy.svg" alt="Ploopy">
                                     </a>
-                <p>© 2026 Kroissant - Tous droits reserves.</p>
+                <p>© 2026 Ploopy - Tous droits reserves.</p>
                 <a class="footer-link" href="/science">Comment sont choisis nos contenus</a>
             </footer>
         </body>
