@@ -38,7 +38,7 @@ pub fn render_content_detail(
                 </ul>
             </section>
 
-            <p class="source-note">Sources: analyse interne Kroissant · {}</p>
+            <p class="source-note">Sources: analyse interne Ploopy · {}</p>
 
             <section class="section-block similar-block">
                 <div class="section-heading">
@@ -66,7 +66,7 @@ pub fn render_content_detail(
     );
 
     render_page(
-        &format!("{} - Kroissant", content.title),
+        &format!("{} - Ploopy", content.title),
         "Bibliotheque",
         Some("/bibliotheque"),
         user,

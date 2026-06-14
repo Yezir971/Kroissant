@@ -67,7 +67,7 @@ impl Benefit {
                 label: "Resilience",
                 summary: "Apprendre a surmonter les obstacles en maintenant l'effort.",
                 detail: "Capacite a surmonter les obstacles.",
-                source: "Analyse Kroissant",
+                source: "Analyse Ploopy",
             })
     }
 }

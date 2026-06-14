@@ -11,7 +11,7 @@ pub fn render_auth_page(
 ) -> String {
     if user.is_some() {
         return render_page(
-            "Kroissant",
+            "Ploopy",
             "Accueil",
             Some("/"),
             &user.cloned(),

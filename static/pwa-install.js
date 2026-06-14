@@ -33,7 +33,7 @@ if (installBtn) {
 }
 
 window.addEventListener('appinstalled', (event) => {
-    console.log('Successfully installed Kroissant');
+    console.log('Successfully installed Ploopy');
     if (installBtn) {
         installBtn.style.display = 'none';
     }

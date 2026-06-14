@@ -43,7 +43,7 @@ pub fn render_account(user: &User, saved: &[Content], history: &[Content]) -> St
     );
 
     render_page(
-        "Compte - Kroissant",
+        "Compte - Ploopy",
         "Accueil",
         Some("/"),
         &Some(user.clone()),

@@ -41,7 +41,7 @@ pub fn render_science(user: &Option<User>, benefits: &[Benefit]) -> String {
     );
 
     render_page_with_class(
-        "Selection scientifique - Kroissant",
+        "Selection scientifique - Ploopy",
         "Accueil",
         Some("/"),
         user,

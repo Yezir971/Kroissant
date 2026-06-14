@@ -21,7 +21,7 @@ pub fn render_library(
     );
 
     render_page(
-        "Bibliotheque - Kroissant",
+        "Bibliotheque - Ploopy",
         "Accueil",
         Some("/"),
         user,

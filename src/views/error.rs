@@ -25,7 +25,7 @@ pub fn render_404(user: &Option<User>) -> String {
         "#
     );
 
-    render_page("Page introuvable - Kroissant", "Erreur 404", None, user, body)
+    render_page("Page introuvable - Ploopy", "Erreur 404", None, user, body)
 }
 
 pub fn render_error_page(message: &str) -> String {
@@ -35,7 +35,7 @@ pub fn render_error_page(message: &str) -> String {
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Kroissant</title>
+            <title>Ploopy</title>
             <link rel="stylesheet" href="/static/app.css">
         </head>
         <body>

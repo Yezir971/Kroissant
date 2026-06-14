@@ -96,7 +96,7 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
         render_cards(moment),
     );
 
-    render_page("Kroissant", "Accueil", None, user, body)
+    render_page("Ploopy", "Accueil", None, user, body)
 }
 
 
