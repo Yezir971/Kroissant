@@ -58,6 +58,7 @@ pub fn render_page_with_class(
             <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
             <meta name="apple-mobile-web-app-title" content="Ploopy">
             <link rel="apple-touch-icon" href="/static/img/bluey.svg">
+            <link rel="icon" type="image/x-icon" href="/static/img/favicon.svg">
             <script src="/static/htmx.min.js" defer></script>
             <script src="/static/pwa-install.js" defer></script>
             <script>

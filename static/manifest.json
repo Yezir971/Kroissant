@@ -8,7 +8,7 @@
   "description": "Curation de contenus developpementaux pour enfants.",
   "icons": [
     {
-      "src": "/static/img/bluey.svg",
+      "src": "/static/img/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
