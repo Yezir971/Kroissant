@@ -44,6 +44,19 @@ pub fn render_auth_page(
         .map(|message| format!(r#"<p class="form-error">{}</p>"#, h(message)))
         .unwrap_or_default();
 
+    let confirm_html = if matches!(mode, AuthMode::Register) {
+        r#"<label>Confirmation du mot de passe
+            <div class="password-wrapper">
+                <input id="confirm-password-input" name="confirm_password" type="password" placeholder="••••••••" minlength="8" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('confirm-password-input', 'confirm-password-icon')">
+                    <img id="confirm-password-icon" src="/static/img/oeil.svg" alt="Afficher le mot de passe">
+                </button>
+            </div>
+        </label>"#.to_string()
+    } else {
+        "".to_string()
+    };
+
     let body = format!(
         r#"
         <main class="centered-page">
@@ -54,7 +67,15 @@ pub fn render_auth_page(
                 <form method="post" action="{}" class="auth-form">
                     <input type="hidden" name="next" value="{}">
                     <label>Adresse email<input name="email" type="email" placeholder="votre@email.com" autocomplete="email" required></label>
-                    <label>Mot de passe<input name="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required></label>
+                    <label>Mot de passe
+                        <div class="password-wrapper">
+                            <input id="password-input" name="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password-input', 'password-icon')">
+                                <img id="password-icon" src="/static/img/oeil.svg" alt="Afficher le mot de passe">
+                            </button>
+                        </div>
+                    </label>
+                    {}
                     <button class="button button-primary full-width" type="submit">{}</button>
                 </form>
                 <div class="divider">ou</div>
@@ -62,12 +83,26 @@ pub fn render_auth_page(
                 <small>Gratuit · Aucune carte requise · Donnees securisees</small>
             </section>
         </main>
+        <script>
+            function togglePassword(inputId, iconId) {{
+                const input = document.getElementById(inputId);
+                const icon = document.getElementById(iconId);
+                if (input.type === 'password') {{
+                    input.type = 'text';
+                    icon.src = '/static/img/oeil-dash.svg';
+                }} else {{
+                    input.type = 'password';
+                    icon.src = '/static/img/oeil.svg';
+                }}
+            }}
+        </script>
         "#,
         h(title),
         h(subtitle),
         error_html,
         action,
         a(&next_value),
+        confirm_html,
         primary,
         secondary,
         secondary_text,

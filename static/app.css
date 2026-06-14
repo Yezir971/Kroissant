@@ -1033,6 +1033,31 @@ input {
   color: var(--ink);
 }
 
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.password-toggle img {
+  width: 24px;
+  height: 24px;
+}
+
 .divider {
   display: flex;
   align-items: center;
