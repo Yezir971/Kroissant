@@ -12,28 +12,364 @@
   ],
   "series": [
     {
-      "tmdb_id": 82728,
-      "name": "Bluey",
-      "episodes": 8,
-      "season": 1,
-      "platform": "disney",
-      "age_range": "3-7 ans"
+      "tmdb_id": 2632,
+      "name": "Il était une fois… la Vie",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
     },
     {
-      "tmdb_id": 82456,
-      "name": "Hilda",
-      "episodes": 6,
-      "season": 1,
+      "tmdb_id": 4035,
+      "name": "Inspecteur Gadget (1983)",
+      "platform": "tf1",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 62508,
+      "name": "Inspecteur Gadget (2015)",
       "platform": "netflix",
-      "age_range": "6-10 ans"
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 4025,
+      "name": "Ulysse 31",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2777,
+      "name": "Oggy et les Cafards",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 11801,
+      "name": "Les Zinzins de l'espace",
+      "platform": "gulli",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 4622,
+      "name": "Code Lyoko",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2808,
+      "name": "Totally Spies! (Classic)",
+      "platform": "tf1",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 257122,
+      "name": "Totally Spies! (2024)",
+      "platform": "gulli",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 140,
+      "name": "Martin Mystère",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 64414,
+      "name": "Wakfu",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 66610,
+      "name": "Titeuf",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 65334,
+      "name": "Miraculous",
+      "platform": "disney",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 387,
+      "name": "Bob l'éponge",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 3022,
+      "name": "Les Razmoket (1991)",
+      "platform": "paramount",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 124920,
+      "name": "Les Razmoket (2021)",
+      "platform": "paramount",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 537,
+      "name": "Hé Arnold !",
+      "platform": "paramount",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 4229,
+      "name": "Le Laboratoire de Dexter",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 607,
+      "name": "Les Super Nanas (1998)",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 66149,
+      "name": "Les Super Nanas (2016)",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2228,
+      "name": "Minus et Cortex",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 82,
+      "name": "Les Animaniacs",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 246,
+      "name": "Avatar : Le Dernier Maître de l'air (Animé)",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 82452,
+      "name": "Avatar : Le dernier maître de l'air (Live Action)",
+      "platform": "netflix",
+      "age_range": "12+ ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 4630,
+      "name": "Mes parrains sont magiques",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2129,
+      "name": "Jimmy Neutron",
+      "platform": "paramount",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2085,
+      "name": "Courage, le chien froussard",
+      "platform": "youtube",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 2345,
+      "name": "Kim Possible",
+      "platform": "disney",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 604,
+      "name": "Teen Titans",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
     },
     {
       "tmdb_id": 15260,
       "name": "Adventure Time",
-      "episodes": 10,
-      "season": 1,
-      "platform": "youtube",
-      "age_range": "7-12 ans"
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 37606,
+      "name": "Le Monde incroyable de Gumball",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 40075,
+      "name": "Souvenirs de Gravity Falls",
+      "platform": "disney",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 61175,
+      "name": "Steven Universe",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 31132,
+      "name": "Regular Show",
+      "platform": "netflix",
+      "age_range": "12+ ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 1877,
+      "name": "Phinéas et Ferb",
+      "platform": "disney",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 68073,
+      "name": "Bienvenue chez les Loud",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 45140,
+      "name": "Teen Titans Go!",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 60625,
+      "name": "Rick et Morty",
+      "platform": "netflix",
+      "age_range": "16+ ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 81046,
+      "name": "Le Prince des dragons",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 79732,
+      "name": "She-Ra et les princesses au pouvoir",
+      "platform": "netflix",
+      "age_range": "7-12 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 57532,
+      "name": "La Pat' Patrouille",
+      "platform": "netflix",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 12225,
+      "name": "Peppa Pig",
+      "platform": "netflix",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 82728,
+      "name": "Bluey",
+      "platform": "disney",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 79,
+      "name": "Dora l'exploratrice",
+      "platform": "tf1",
+      "age_range": "3-7 ans",
+      "episodes": 5,
+      "season": 1
+    },
+    {
+      "tmdb_id": 111110,
+      "name": "One Piece (Netflix)",
+      "platform": "netflix",
+      "age_range": "12+ ans",
+      "episodes": 5,
+      "season": 1
     }
   ]
 }
