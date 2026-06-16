@@ -13,41 +13,14 @@ use crate::views;
 
 pub const REGISTRATION_COOKIE: &str = "kroissant_registration";
 
-/// Page d'inscription.
-pub async fn register_page(
-    AuthUser(user): AuthUser,
-    State(_state): State<AppState>,
-    Query(query): Query<AuthQuery>,
-) -> AppResult<Html<String>> {
-    Ok(Html(views::render_auth_page(
-        AuthMode::Register,
-        query.next,
-        None,
-        user.as_ref(),
-    )))
-}
-
-/// Action d'inscription.
-pub async fn register(
-    State(state): State<AppState>,
-    Form(form): Form<AuthForm>,
-) -> AppResult<Response> {
-    let next = clean_next(form.next.clone());
-
-    match state.auth_service.register(&form.email, &form.password).await {
-        Ok(token) => Ok(redirect_with_cookie(&next, &token)),
-        Err(AppError::Auth(msg)) => Ok((
-            StatusCode::BAD_REQUEST,
-            Html(views::render_auth_page(
-                AuthMode::Register,
-                form.next,
-                Some(&msg),
-                None,
-            )),
-        )
-            .into_response()),
-        Err(e) => Err(e),
-    }
+/// Action d'inscription (dépréciée).
+pub async fn register_deprecated() -> impl IntoResponse {
+    (
+        StatusCode::GONE,
+        Html(views::render_error_page(
+            "Cet endpoint d'inscription n'est plus disponible. Veuillez utiliser le nouveau parcours sur /inscription.",
+        )),
+    )
 }
 
 /// Page de connexion.

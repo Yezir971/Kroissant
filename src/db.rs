@@ -16,6 +16,7 @@ pub async fn migrate(pool: &SqlitePool) -> Result<()> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
+            pseudo TEXT,
             created_at TEXT NOT NULL
         )
         "#,
@@ -118,6 +119,11 @@ pub async fn migrate(pool: &SqlitePool) -> Result<()> {
     for statement in statements {
         sqlx::query(statement).execute(pool).await?;
     }
+
+    // Migration manuelle pour ajouter la colonne pseudo si elle n'existe pas
+    let _ = sqlx::query("ALTER TABLE users ADD COLUMN pseudo TEXT")
+        .execute(pool)
+        .await;
 
     Ok(())
 }

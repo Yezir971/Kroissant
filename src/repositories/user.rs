@@ -7,7 +7,7 @@ use sqlx::SqlitePool;
 
 #[async_trait]
 pub trait UserRepository: Send + Sync {
-    async fn create_user(&self, email: &str, password_hash: &str) -> AppResult<i64>;
+    async fn create_user(&self, email: &str, password_hash: &str, pseudo: &str) -> AppResult<i64>;
     async fn get_by_email(&self, email: &str) -> AppResult<Option<(i64, String)>>;
     async fn get_by_id(&self, id: i64) -> AppResult<Option<User>>;
 
@@ -32,11 +32,12 @@ impl SqliteUserRepository {
 
 #[async_trait]
 impl UserRepository for SqliteUserRepository {
-    async fn create_user(&self, email: &str, password_hash: &str) -> AppResult<i64> {
+    async fn create_user(&self, email: &str, password_hash: &str, pseudo: &str) -> AppResult<i64> {
         let result =
-            sqlx::query("INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)")
+            sqlx::query("INSERT INTO users (email, password_hash, pseudo, created_at) VALUES (?, ?, ?, ?)")
                 .bind(email)
                 .bind(password_hash)
+                .bind(pseudo)
                 .bind(Utc::now().to_rfc3339())
                 .execute(&self.pool)
                 .await?;
@@ -55,7 +56,7 @@ impl UserRepository for SqliteUserRepository {
     }
 
     async fn get_by_id(&self, id: i64) -> AppResult<Option<User>> {
-        let row = sqlx::query_as::<_, User>("SELECT id, email FROM users WHERE id = ?")
+        let row = sqlx::query_as::<_, User>("SELECT id, email, pseudo FROM users WHERE id = ?")
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
