@@ -6,10 +6,12 @@ use axum::{
 };
 use crate::app_state::AppState;
 use crate::error::{AppError, AppResult};
-use crate::models::{AuthForm, AuthMode, AuthQuery, User};
+use crate::models::{AuthForm, AuthMode, AuthQuery, User, VerifyQuery};
 use crate::auth::{AuthUser, AUTH_COOKIE};
 use crate::utils::clean_next;
 use crate::views;
+
+pub const REGISTRATION_COOKIE: &str = "kroissant_registration";
 
 /// Page d'inscription.
 pub async fn register_page(
@@ -92,6 +94,34 @@ pub async fn logout() -> Response {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
     response
+}
+
+/// Action de vérification d'email.
+pub async fn verify(
+    State(state): State<AppState>,
+    Query(query): Query<VerifyQuery>,
+) -> AppResult<Response> {
+    match state.email_verification_repo.find_valid_token(&query.token).await? {
+        Some(email) => {
+            state.email_verification_repo.mark_token_used(&query.token).await?;
+
+            let mut response = Redirect::to("/inscription/step/password").into_response();
+            let cookie = format!("{REGISTRATION_COOKIE}={email}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600");
+            if let Ok(value) = HeaderValue::from_str(&cookie) {
+                response.headers_mut().insert(header::SET_COOKIE, value);
+            }
+            Ok(response)
+        }
+        None => {
+            Ok((
+                StatusCode::BAD_REQUEST,
+                Html(views::render_error_page(
+                    "Lien de vérification invalide ou expiré. Veuillez demander un nouveau lien d'inscription.",
+                )),
+            )
+                .into_response())
+        }
+    }
 }
 
 /// Page de compte (authentification requise).

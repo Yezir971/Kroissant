@@ -12,6 +12,6 @@ pub use auth_mode::AuthMode;
 pub use benefit::Benefit;
 pub use claims::Claims;
 pub use content::Content;
-pub use query::{AuthForm, AuthQuery, PlatformQuery};
+pub use query::{AuthForm, AuthQuery, PlatformQuery, VerifyQuery};
 pub use tagged_series::TaggedSeries;
 pub use user::User;

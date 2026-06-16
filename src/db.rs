@@ -104,6 +104,15 @@ pub async fn migrate(pool: &SqlitePool) -> Result<()> {
             FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
         )
         "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS email_verifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL,
+            expires_at INTEGER NOT NULL,
+            used INTEGER NOT NULL DEFAULT 0
+        )
+        "#,
     ];
 
     for statement in statements {

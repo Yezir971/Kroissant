@@ -20,3 +20,8 @@ pub struct AuthForm {
     pub password: String,
     pub next: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct VerifyQuery {
+    pub token: String,
+}

@@ -28,6 +28,7 @@ pub fn create_router(state: AppState) -> Router {
         
         // Authentification & Compte
         .route("/inscription", get(handlers::auth::register_page).post(handlers::auth::register))
+        .route("/inscription/verify", get(handlers::auth::verify))
         .route("/connexion", get(handlers::auth::login_page).post(handlers::auth::login))
         .route("/deconnexion", post(handlers::auth::logout))
         .route("/compte", get(handlers::auth::account))
