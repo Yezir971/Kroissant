@@ -83,7 +83,7 @@ pub fn render_library_section(
         r##"
         <div class="section-heading library-title">
             <h1>Séries catégorisées par IA</h1>
-            <p>Recherche par tags ou par titres, avec des catégories calculées au niveau série.</p>
+            <p>Chaque contenu développe une compétence réelle chez votre enfant</p>
         </div>
         {}
         <div class="card-grid library-grid ai-series-grid">
@@ -148,9 +148,9 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </span>
                     <input type="text" name="tag" value="{}" placeholder="Recherche" autocomplete="off" hx-trigger="keyup changed delay:500ms" hx-get="/partials/library" hx-target="#library-section">
-                    <span class="mic-icon-right">
+                    <button type="button" class="mic-icon-right" aria-label="Dicter la recherche" title="Dicter la recherche">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                    </span>
+                    </button>
                 </div>
                 
                 <button type="button" class="filter-button" onclick="document.getElementById('filter-panel').classList.toggle('hidden')">
@@ -176,6 +176,95 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
                     document.getElementById('filter-' + name).value = value;
                     const form = document.getElementById('library-filter-form');
                     htmx.trigger(form, 'filterChanged');
+                }}
+
+                function initLibrarySpeechSearch() {{
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    document.querySelectorAll('.mic-icon-right').forEach((button) => {{
+                        if (button.dataset.speechReady === 'true') return;
+                        button.dataset.speechReady = 'true';
+
+                        const wrapper = button.closest('.search-input-wrapper');
+                        const input = wrapper && wrapper.querySelector('input[name="tag"]');
+                        if (!input || !SpeechRecognition) {{
+                            button.disabled = true;
+                            button.title = 'La dictee vocale n est pas disponible dans ce navigateur';
+                            return;
+                        }}
+
+                        const recognition = new SpeechRecognition();
+                        recognition.lang = 'fr-FR';
+                        recognition.continuous = false;
+                        recognition.interimResults = true;
+
+                        let isListening = false;
+
+                        const submitSearch = () => {{
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+
+                            const form = input.closest('form');
+                            if (form && window.htmx) {{
+                                htmx.trigger(form, 'filterChanged');
+                            }}
+                        }};
+
+                        const cleanTranscript = (value) => value
+                            .replace(/[.!?,;:]+$/g, '')
+                            .trim();
+
+                        recognition.addEventListener('start', () => {{
+                            isListening = true;
+                            button.classList.add('is-listening');
+                            button.setAttribute('aria-label', 'Arreter la dictee');
+                            button.title = 'Arreter la dictee';
+                        }});
+
+                        recognition.addEventListener('end', () => {{
+                            isListening = false;
+                            button.classList.remove('is-listening');
+                            button.setAttribute('aria-label', 'Dicter la recherche');
+                            button.title = 'Dicter la recherche';
+                        }});
+
+                        recognition.addEventListener('result', (event) => {{
+                            const transcript = Array.from(event.results)
+                                .map((result) => result[0].transcript)
+                                .join('')
+                                .trim();
+
+                            input.value = cleanTranscript(transcript);
+                            if (event.results[event.results.length - 1].isFinal) {{
+                                submitSearch();
+                            }}
+                        }});
+
+                        recognition.addEventListener('error', () => {{
+                            isListening = false;
+                            button.classList.remove('is-listening');
+                        }});
+
+                        button.addEventListener('click', () => {{
+                            if (isListening) {{
+                                recognition.stop();
+                                return;
+                            }}
+
+                            input.focus();
+                            try {{
+                                recognition.start();
+                            }} catch (_error) {{
+                                isListening = false;
+                                button.classList.remove('is-listening');
+                            }}
+                        }});
+                    }});
+                }}
+
+                initLibrarySpeechSearch();
+                if (!window.librarySpeechSearchReady) {{
+                    window.librarySpeechSearchReady = true;
+                    document.body.addEventListener('htmx:afterSwap', initLibrarySpeechSearch);
                 }}
             </script>
         </div>

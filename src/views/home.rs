@@ -8,7 +8,8 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
         r#"
         <section class="hero">
             <div class="hero-inner">
-                <h1>Des dessins animés choisis pour eux. Une sérénité retrouvée pour vous.</h1>
+                <h1>La plateforme qui sélectionne les 
+dessins animés adaptés à votre enfant.</h1>
                 <p>Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
                 <div class="hero-actions">
                     <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
