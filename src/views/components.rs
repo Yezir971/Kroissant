@@ -209,6 +209,10 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
                             }}
                         }};
 
+                        const cleanTranscript = (value) => value
+                            .replace(/[.!?,;:]+$/g, '')
+                            .trim();
+
                         recognition.addEventListener('start', () => {{
                             isListening = true;
                             button.classList.add('is-listening');
@@ -229,7 +233,7 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
                                 .join('')
                                 .trim();
 
-                            input.value = transcript;
+                            input.value = cleanTranscript(transcript);
                             if (event.results[event.results.length - 1].isFinal) {{
                                 submitSearch();
                             }}
