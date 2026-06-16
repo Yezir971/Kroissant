@@ -1,6 +1,6 @@
 //! Handlers pour le parcours d'inscription multi-étapes.
 use axum::{
-    extract::{Path, State, Query},
+    extract::{Path, State, Query, Form},
     http::{header, HeaderValue, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
 };
@@ -50,16 +50,41 @@ pub async fn get_step(
         return Ok(StatusCode::NOT_FOUND.into_response());
     };
 
-    // Le contenu sera implémenté dans les prompts suivants
-    Ok(Html(format!("<div>Étape : {} (Bientôt disponible)</div>", step)).into_response())
+    let html = match step {
+        RegistrationStep::Entry => views::registration::step_entry::render(),
+        RegistrationStep::Email => views::registration::step_email::render(None),
+        _ => format!("<div>Étape : {} (Bientôt disponible)</div>", step),
+    };
+
+    Ok(Html(html).into_response())
+}
+
+#[derive(serde::Deserialize)]
+pub struct EmailForm {
+    pub email: String,
 }
 
 /// Action POST pour l'étape Email.
 pub async fn post_email(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Form(form): Form<EmailForm>,
 ) -> AppResult<Response> {
-    // Implémentation au Prompt 4
-    Ok(StatusCode::NOT_IMPLEMENTED.into_response())
+    let email = form.email.trim().to_lowercase();
+
+    // Valider le format (très basique)
+    if !email.contains('@') || !email.contains('.') {
+        return Ok(Html(views::registration::step_email::render(Some("Format d'adresse invalide."))).into_response());
+    }
+
+    // Vérifier l'unicité
+    if state.user_repo.get_by_email(&email).await?.is_some() {
+        return Ok(Html(views::registration::step_email::render(Some("Cette adresse est déjà utilisée."))).into_response());
+    }
+
+    // Envoyer l'email
+    state.email_service.send_verification_email(&email).await?;
+
+    Ok(Html(views::registration::step_email_sent::render(&email)).into_response())
 }
 
 /// Action POST pour l'étape Password.
