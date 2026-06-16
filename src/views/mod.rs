@@ -9,6 +9,7 @@ pub mod content_detail;
 pub mod science;
 pub mod auth;
 pub mod account;
+pub mod email;
 pub mod error;
 
 pub use utils::{a, h};

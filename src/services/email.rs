@@ -2,8 +2,9 @@
 use async_trait::async_trait;
 use crate::error::{AppError, AppResult};
 use crate::repositories::EmailVerificationRepository;
+use crate::views::email::{verification, verification_plain};
 use chrono::{Duration, Utc};
-use lettre::message::{header, MultiPart, SinglePart};
+use lettre::message::MultiPart;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use std::env;
@@ -48,29 +49,14 @@ impl EmailService for EmailServiceImpl {
         let smtp_user = env::var("SMTP_USER").map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_USER non défini")))?;
         let smtp_pass = env::var("SMTP_PASSWORD").map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_PASSWORD non défini")))?;
 
+        let html_body = verification::render(&verify_url);
+        let plain_body = verification_plain::render(&verify_url);
+
         let email_msg = Message::builder()
             .from(from_email.parse().map_err(|_| AppError::Internal(anyhow::anyhow!("FROM_EMAIL invalide")))?)
             .to(email.parse().map_err(|_| AppError::Internal(anyhow::anyhow!("Email destinataire invalide")))?)
-            .subject("Vérifiez votre adresse email - Kroissant")
-            .multipart(
-                MultiPart::alternative()
-                    .singlepart(
-                        SinglePart::builder()
-                            .header(header::ContentType::TEXT_PLAIN)
-                            .body(format!(
-                                "Bonjour,\n\nMerci de vous être inscrit sur Kroissant. Veuillez vérifier votre adresse email en cliquant sur le lien suivant :\n\n{}\n\nCe lien expirera dans 24 heures.",
-                                verify_url
-                            )),
-                    )
-                    .singlepart(
-                        SinglePart::builder()
-                            .header(header::ContentType::TEXT_HTML)
-                            .body(format!(
-                                "<html><body><p>Bonjour,</p><p>Merci de vous être inscrit sur Kroissant. Veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p><p><a href='{}' style='display:inline-block;background:#ff6b6b;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;'>Vérifier mon email</a></p><p>Ce lien expirera dans 24 heures.</p></body></html>",
-                                verify_url
-                            )),
-                    ),
-            )
+            .subject("Vérifiez votre adresse e-mail — Kroissant")
+            .multipart(MultiPart::alternative_plain_html(plain_body, html_body))
             .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur construction email: {}", e)))?;
 
         // 3. Envoyer via SMTP
