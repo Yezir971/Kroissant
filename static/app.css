@@ -209,7 +209,7 @@ input {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
   align-items: center;
   gap: 48px;
-  width: min(1080px, calc(100% - 10vw));
+  width: min(1080px, 90%);
   margin: 0 auto;
   padding: 72px 0 82px;
 }
@@ -278,7 +278,7 @@ input {
 .science-flow,
 .account-shell,
 .how-it-works {
-  width: min(1080px, calc(100% - 10vw));
+  width: min(1080px, 90%);
   margin: 0 auto;
 }
 
@@ -588,11 +588,16 @@ input {
   display: flex;
   width: 100%;
   height: 100%;
-  animation: library-carousel-slide 18s infinite;
+  animation: library-carousel-slide 12s infinite;
 }
 
 .library-carousel-slide {
   flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+}
+
+.library-carousel-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -601,37 +606,24 @@ input {
 
 @keyframes library-carousel-slide {
   0%,
-  13% {
+  19% {
     transform: translateX(0);
   }
 
-  16.666%,
-  29.666% {
+  25%,
+  44% {
     transform: translateX(-100%);
   }
 
-  33.333%,
-  46.333% {
+  50%,
+  69% {
     transform: translateX(-200%);
   }
 
-  50%,
-  63% {
-    transform: translateX(-300%);
-  }
-
-  66.666%,
-  79.666% {
-    transform: translateX(-400%);
-  }
-
-  83.333%,
-  96.333% {
-    transform: translateX(-500%);
-  }
-
+  75%,
+  94%,
   100% {
-    transform: translateX(-500%);
+    transform: translateX(-300%);
   }
 }
 
@@ -871,7 +863,7 @@ input {
   z-index: 1;
   display: flex;
   min-height: 420px;
-  width: min(1080px, calc(100% - 10vw));
+  width: min(1080px, 90%);
   flex-direction: column;
   justify-content: center;
   margin: 0 auto;
@@ -1001,7 +993,7 @@ input {
 
 .science-hero h1,
 .science-hero p {
-  width: min(1080px, 100%);
+  width: min(1080px, 90%);
   margin-left: auto;
   margin-right: auto;
 }
@@ -1062,7 +1054,7 @@ input {
 .science-page .science-hero h1,
 .science-page .science-hero p,
 .science-page .science-flow {
-  width: min(648px, calc(100% - 80px));
+  width: min(648px, 90%);
 }
 
 .science-page .science-hero h1 {
@@ -1073,7 +1065,7 @@ input {
 .science-page .science-hero p {
   max-width: 430px;
   margin-top: 18px;
-  margin-left: calc((100% - min(648px, calc(100% - 80px))) / 2);
+  margin-left: max(5%, calc((100% - 648px) / 2));
   color: rgba(255, 255, 255, 0.94);
 }
 
@@ -1377,7 +1369,7 @@ input {
   .science-flow,
   .account-shell,
   .how-it-works-grid {
-    width: min(100% - 32px, 1080px);
+    width: min(90%, 1080px);
   }
 
   .home-page .page-flow,

@@ -1,13 +1,14 @@
-const CACHE_NAME = 'kroissant-v13';
+const CACHE_NAME = 'kroissant-v15';
 const ASSETS_TO_CACHE = [
   '/static/app.css',
   '/static/app.js',
   '/static/htmx.min.js',
-  '/static/img/bluey.svg',
-  '/static/img/puffin-rock.svg',
-  '/static/img/tumble-leaf.svg',
-  '/static/img/ada-twist.svg',
-  '/static/img/baymax.svg',
+  '/static/img/blue_desktop.webp',
+  '/static/img/bluey_mobile.webp',
+  '/static/img/hilda_desktop.webp',
+  '/static/img/hilda_mobile.webp',
+  '/static/img/puffin_rock_desktop.webp',
+  '/static/img/puffin_rock_mobile.webp',
   '/static/img/ploopy.svg'
 ];
 
