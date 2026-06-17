@@ -71,7 +71,7 @@ input {
   align-items: center;
   min-height: 62px;
   padding: 0 5vw;
-  background: var(--surface);
+  background: white;
   border-bottom: 1px solid var(--line);
 }
 
@@ -92,6 +92,7 @@ input {
   align-items: center;
   justify-content: flex-end;
   gap: 14px;
+  background: white;
 }
 
 .topbar-nav form {
@@ -163,6 +164,12 @@ input {
   color: white;
 }
 
+.button-outline-brown {
+  background: transparent;
+  border-color: var(--brand-dark);
+  color: var(--brand-dark);
+}
+
 .button-secondary {
   background: white;
   border-color: var(--brand-dark);
@@ -187,17 +194,34 @@ input {
   width: 100%;
 }
 
-.hero,
 .detail-hero,
 .science-hero {
   background: var(--hero);
   color: white;
 }
 
+.hero {
+  color: var(--brand-dark);
+}
+
 .hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  align-items: center;
+  gap: 48px;
   width: min(1080px, calc(100% - 10vw));
   margin: 0 auto;
   padding: 72px 0 82px;
+}
+
+.hero-copy {
+  min-width: 0;
+  color: var(--dark-brown);
+}
+
+.hero-illustration {
+  width: min(100%, 320px);
+  justify-self: end;
 }
 
 .hero h1,
@@ -213,7 +237,7 @@ input {
 .hero p {
   max-width: 620px;
   margin: 24px 0 0;
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--dark-brown);
 }
 
 .hero-actions {
@@ -1208,6 +1232,16 @@ input {
     padding-bottom: 56px;
   }
 
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .hero-illustration {
+    justify-self: start;
+    width: min(78vw, 280px);
+  }
+
   .detail-hero,
   .detail-hero-content {
     min-height: 390px;
@@ -1268,6 +1302,46 @@ input {
 }
 
 @media (max-width: 520px) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 46%);
+    gap: 26px 16px;
+    padding-top: 44px;
+  }
+
+  .hero-copy {
+    display: contents;
+  }
+
+  .hero h1 {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    font-size: 1.45rem;
+    line-height: 1.12;
+  }
+
+  .hero p {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .hero-illustration {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+    width: 100%;
+  }
+
+  .hero-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin-top: 2px;
+  }
+
   .nav-button,
   .button,
   .platform-tab {

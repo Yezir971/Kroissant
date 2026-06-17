@@ -8,14 +8,17 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
         r#"
         <section class="hero">
             <div class="hero-inner">
-                <h1>La plateforme qui sélectionne les 
+                <div class="hero-copy">
+                    <h1>La plateforme qui sélectionne les 
 dessins animés adaptés à votre enfant.</h1>
-                <p>Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
-                <div class="hero-actions">
-                    <a class="button button-light" href="/bibliotheque">Decouvrir les contenus</a>
-                    <a class="button button-outline-light" href="/science">Comment sont choisis nos contenus</a>
-                    <button id="install-button" class="button button-primary" style="display: none;">Installer l'application</button>
+                    <p class="hero-copy-text">Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="/bibliotheque">Decouvrir les contenus</a>
+                        <a class="button button-outline-brown" href="/science">Comment sont choisis nos contenus</a>
+                        <button id="install-button" class="button button-primary" style="display: none;">Installer l'application</button>
+                    </div>
                 </div>
+                <img class="hero-illustration" src="/static/img/illustration.svg" alt="" aria-hidden="true">
             </div>
         </section>
 
