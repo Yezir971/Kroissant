@@ -66,7 +66,7 @@ pub fn render_auth_page(
     };
 
     let body = format!(
-        r#"
+        r##"
         <main class="centered-page">
             <section class="auth-card">
                 <h1>{}</h1>
@@ -85,7 +85,7 @@ pub fn render_auth_page(
                     </label>
                     <a href="#" class="forgot-password">Mot de passe oublié ?</a>
                     <label class="remember-me">
-                        <input type="checkbox" name="remember_me"> Se souvenir de moi
+                        <input type="checkbox" name="remember_me"> <span>Se souvenir de moi</span>
                     </label>
                     {}
                     <div class="auth-actions">
@@ -112,7 +112,7 @@ pub fn render_auth_page(
                 }}
             }}
         </script>
-        "#,
+        "##,
         title, 
         subtitle_html,
         error_html,
