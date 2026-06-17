@@ -133,6 +133,7 @@ impl ContentRepository for SqliteContentRepository {
                 s.first_air_date,
                 s.poster_path,
                 s.platform,
+                CAST(AVG(e.runtime) AS INTEGER) AS duration,
                 s.age_range,
                 s.episode_context_count,
                 s.llm_reason,
@@ -142,6 +143,7 @@ impl ContentRepository for SqliteContentRepository {
             FROM tmdb_series s
             LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
             LEFT JOIN tags t ON t.id = st.tag_id
+            LEFT JOIN tmdb_episodes e ON e.series_id = s.id AND e.runtime IS NOT NULL
             "#
         );
 

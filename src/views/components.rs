@@ -1,5 +1,5 @@
 //! Composants HTML réutilisables.
-use crate::models::{Benefit, Content, TaggedSeries, User};
+use crate::models::{Content, TaggedSeries, User};
 use crate::views::utils::{a, h};
 
 pub fn render_platform_tabs(active: &str, context: &str) -> String {
@@ -76,7 +76,7 @@ pub fn render_home_platform_section(_active: &str, contents: &[Content]) -> Stri
 
 pub fn render_library_section(
     query: &crate::models::PlatformQuery,
-    _tags: &[String],
+    tags: &[String],
     series: &[TaggedSeries],
 ) -> String {
     format!(
@@ -85,10 +85,12 @@ pub fn render_library_section(
             <h1>Séries catégorisées par IA</h1>
             <p>Chaque contenu développe une compétence réelle chez votre enfant</p>
         </div>
+        {}
         <div class="card-grid library-grid ai-series-grid">
             {}
         </div>
         "##,
+        render_search_and_filters(query, tags),
         render_tagged_series_or_empty(series, query.tag.as_deref().or(query.skill.as_deref())),
     )
 }
@@ -315,17 +317,8 @@ pub fn render_tagged_series_card(series: &TaggedSeries) -> String {
         .as_ref()
         .map(|path| tmdb_image_url(path))
         .unwrap_or_else(|| "/static/img/storybots.svg".to_string());
-    let tags = series
-        .tags
-        .as_deref()
-        .unwrap_or("")
-        .split(',')
-        .filter(|tag| !tag.trim().is_empty())
-        .map(|tag| format!(r#"<span class="tag-pill">{}</span>"#, h(tag.trim())))
-        .collect::<Vec<_>>()
-        .join("");
     let platform = if series.platform.trim().is_empty() {
-        "Plateforme a definir".to_string()
+        "la plateforme".to_string()
     } else {
         platform_label(&series.platform).to_string()
     };
@@ -334,11 +327,10 @@ pub fn render_tagged_series_card(series: &TaggedSeries) -> String {
     } else {
         &series.age_range
     };
-    let confidence = series
-        .confidence
-        .map(|value| format!(" · confiance {:.0}%", value * 100.0))
-        .unwrap_or_default();
-    let first_air_date = series.first_air_date.as_deref().unwrap_or("date inconnue");
+    let duration = series
+        .duration
+        .map(|minutes| format!("{} min", minutes))
+        .unwrap_or_else(|| "Duree a definir".to_string());
 
     format!(
         r#"
@@ -348,11 +340,8 @@ pub fn render_tagged_series_card(series: &TaggedSeries) -> String {
             </a>
             <div class="card-body">
                 <h3><a href="{}" target="_blank" rel="noreferrer">{}</a></h3>
-                <p>{} · {} · {}</p>
-                <p>{} episode(s) utilises comme contexte{}</p>
-                <p>{}</p>
-                <div class="tag-list">{}</div>
-                <small>TMDb {} · {}</small>
+                <p>{} &middot; {}</p>
+                <a class="button button-primary card-watch" href="{}" target="_blank" rel="noreferrer">Regarder sur {}</a>
             </div>
         </article>
         "#,
@@ -361,15 +350,10 @@ pub fn render_tagged_series_card(series: &TaggedSeries) -> String {
         a(&poster),
         a(&series.source_url),
         h(&series.name),
-        h(&platform),
+        h(&duration),
         h(age),
-        h(first_air_date),
-        series.episode_context_count,
-        h(&confidence),
-        h(&series.overview),
-        tags,
-        series.tmdb_id,
-        h(&series.llm_reason),
+        a(&series.source_url),
+        h(&platform),
     )
 }
 
@@ -384,25 +368,21 @@ fn tmdb_image_url(path: &str) -> String {
 }
 
 pub fn render_content_card(content: &Content) -> String {
-    let benefit = Benefit::for_skill(&content.skill);
     format!(
         r#"
         <article class="content-card">
             <a class="thumb-link" href="/contenu/{}">
                 <img src="{}" alt="">
-                <span class="pill floating-pill {}">{}</span>
             </a>
             <div class="card-body">
                 <h3><a href="/contenu/{}">{}</a></h3>
-                <p>{} · {}</p>
+                <p>{} &middot; {}</p>
                 <a class="button button-primary card-watch" href="/go/{}">Regarder sur {}</a>
             </div>
         </article>
         "#,
         a(&content.slug),
         a(&content.image_url),
-        h(benefit.key),
-        h(benefit.label),
         a(&content.slug),
         h(&content.title),
         h(&content.duration),
@@ -466,3 +446,4 @@ fn platform_label(platform: &str) -> &'static str {
         _ => "Tous",
     }
 }
+
