@@ -1289,3 +1289,32 @@ input {
     padding: 26px 20px;
   }
 }
+
+/* --- Registration Transitions --- */
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+#registration-container.htmx-settling > * {
+  animation: slideInFromRight 300ms ease-in-out;
+}
+#registration-container.slide-back.htmx-settling > * {
+  animation: slideInFromLeft 300ms ease-in-out;
+}
+#registration-container {
+  overflow: hidden;
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #registration-container.htmx-settling > *,
+  #registration-container.slide-back.htmx-settling > * {
+    animation: none;
+  }
+}
+

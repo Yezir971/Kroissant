@@ -59,8 +59,9 @@ pub fn render_page_with_class(
             <meta name="apple-mobile-web-app-title" content="Ploopy">
             <link rel="apple-touch-icon" href="/static/img/bluey.svg">
             <link rel="icon" type="image/x-icon" href="/static/img/favicon.svg">
-            <script src="/static/htmx.min.js" defer></script>
-            <script src="/static/pwa-install.js" defer></script>
+            <script src="/static/htmx.min.js"></script>
+            <script src="/static/app.js"></script>
+            <script src="/static/pwa-install.js"></script>
             <script>
                 if ('serviceWorker' in navigator) {{
                     window.addEventListener('load', () => {{

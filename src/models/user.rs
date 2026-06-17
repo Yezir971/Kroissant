@@ -5,6 +5,7 @@ use sqlx::FromRow;
 pub struct User {
     pub id: i64,
     pub email: String,
+    pub pseudo: Option<String>,
 }
 
 #[cfg(test)]
@@ -16,7 +17,9 @@ mod tests {
         let user = User {
             id: 1,
             email: "test@example.com".to_string(),
+            pseudo: Some("Zeppa".to_string()),
         };
         assert_eq!(user.email, "test@example.com");
+        assert_eq!(user.pseudo, Some("Zeppa".to_string()));
     }
 }

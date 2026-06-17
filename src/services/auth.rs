@@ -10,7 +10,7 @@ use std::sync::Arc;
 #[async_trait]
 pub trait AuthService: Send + Sync {
     /// Inscrit un nouvel utilisateur et retourne un token JWT.
-    async fn register(&self, email: &str, password: &str) -> AppResult<String>;
+    async fn register(&self, email: &str, password: &str, pseudo: &str) -> AppResult<String>;
     
     /// Connecte un utilisateur existant et retourne un token JWT.
     async fn login(&self, email: &str, password: &str) -> AppResult<String>;
@@ -29,7 +29,7 @@ impl AuthServiceImpl {
 
 #[async_trait]
 impl AuthService for AuthServiceImpl {
-    async fn register(&self, email: &str, password: &str) -> AppResult<String> {
+    async fn register(&self, email: &str, password: &str, pseudo: &str) -> AppResult<String> {
         let email = email.trim().to_lowercase();
         
         if email.is_empty() || password.len() < 8 {
@@ -41,7 +41,7 @@ impl AuthService for AuthServiceImpl {
         }
 
         let hash = auth::password::hash_password(password)?;
-        let user_id = self.user_repo.create_user(&email, &hash).await?;
+        let user_id = self.user_repo.create_user(&email, &hash, pseudo).await?;
 
         let claims = Claims {
             sub: user_id,
@@ -84,7 +84,7 @@ mod tests {
 
     #[async_trait]
     impl UserRepository for MockUserRepo {
-        async fn create_user(&self, _email: &str, _hash: &str) -> AppResult<i64> { Ok(1) }
+        async fn create_user(&self, _email: &str, _hash: &str, _pseudo: &str) -> AppResult<i64> { Ok(1) }
         async fn get_by_email(&self, email: &str) -> AppResult<Option<(i64, String)>> {
             if self.user_exists && email == "exists@test.com" {
                 Ok(Some((1, auth::password::hash_password("password123").unwrap())))
@@ -106,7 +106,7 @@ mod tests {
         let repo = Arc::new(MockUserRepo { user_exists: false });
         let service = AuthServiceImpl::new(repo, "secret".to_string());
         
-        let result = service.register("new@test.com", "password123").await;
+        let result = service.register("new@test.com", "password123", "Zeppa").await;
         assert!(result.is_ok());
     }
 
@@ -115,7 +115,7 @@ mod tests {
         let repo = Arc::new(MockUserRepo { user_exists: false });
         let service = AuthServiceImpl::new(repo, "secret".to_string());
         
-        let result = service.register("", "short").await;
+        let result = service.register("", "short", "").await;
         assert!(matches!(result, Err(AppError::Auth(_))));
     }
 
@@ -124,7 +124,7 @@ mod tests {
         let repo = Arc::new(MockUserRepo { user_exists: true });
         let service = AuthServiceImpl::new(repo, "secret".to_string());
         
-        let result = service.register("exists@test.com", "password123").await;
+        let result = service.register("exists@test.com", "password123", "Zeppa").await;
         assert!(matches!(result, Err(AppError::Auth(_))));
     }
 

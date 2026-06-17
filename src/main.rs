@@ -6,11 +6,21 @@ use tokio::net::TcpListener;
 use std::sync::Arc;
 
 use kroissant::{AppState, routes, db};
-use kroissant::repositories::{SqliteContentRepository, SqliteUserRepository};
-use kroissant::services::{AuthServiceImpl, ContentServiceImpl};
+use kroissant::repositories::{SqliteContentRepository, SqliteUserRepository, SqliteEmailVerificationRepository};
+use kroissant::services::{AuthServiceImpl, ContentServiceImpl, EmailServiceImpl};
+use kroissant::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Chargement du fichier .env approprié
+    let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+    let env_file = format!(".env.{}", app_env);
+    dotenvy::from_filename(&env_file).ok();
+    dotenvy::dotenv().ok(); // Charge aussi .env si présent par défaut
+
+    // Initialisation de la configuration
+    let config = Config::from_env();
+
     // Initialisation du logging
     tracing_subscriber::fmt()
         .with_env_filter(env::var("RUST_LOG").unwrap_or_else(|_| "tower_http=debug,kroissant=debug".to_string()))
@@ -34,14 +44,25 @@ async fn main() -> Result<()> {
     // Initialisation des Repositories
     let content_repo = Arc::new(SqliteContentRepository::new(pool.clone()));
     let user_repo = Arc::new(SqliteUserRepository::new(pool.clone()));
+    let email_verification_repo = Arc::new(SqliteEmailVerificationRepository::new(pool.clone()));
 
     // Initialisation des Services
-    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me-kroissant".to_string());
-    let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_secret.clone()));
+    let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), config.jwt_secret.clone()));
     let content_service = Arc::new(ContentServiceImpl::new(content_repo.clone(), user_repo.clone()));
+    let email_service = Arc::new(EmailServiceImpl::new(email_verification_repo.clone()));
 
     // État global
-    let state = AppState::new(pool, jwt_secret, content_repo, user_repo, auth_service, content_service);
+    let state = AppState::new(
+        pool,
+        config.clone(),
+        config.jwt_secret.clone(),
+        content_repo,
+        user_repo,
+        email_verification_repo,
+        auth_service,
+        content_service,
+        email_service,
+    );
 
     // Démarrage du serveur
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());

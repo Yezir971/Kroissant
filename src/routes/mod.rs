@@ -27,7 +27,14 @@ pub fn create_router(state: AppState) -> Router {
         .route("/go/{slug}", get(handlers::content::go_to_source))
         
         // Authentification & Compte
-        .route("/inscription", get(handlers::auth::register_page).post(handlers::auth::register))
+        .route("/auth/google", get(handlers::auth::google_auth))
+        .route("/auth/google/callback", get(handlers::auth::google_callback))
+        .route("/inscription", get(handlers::registration::registration_shell).post(handlers::auth::register_deprecated))
+        .route("/inscription/verify", get(handlers::registration::verify_email))
+        .route("/inscription/step/email", get(handlers::registration::get_step_email).post(handlers::registration::post_email))
+        .route("/inscription/step/password", get(handlers::registration::get_step_password).post(handlers::registration::post_password))
+        .route("/inscription/step/profile", get(handlers::registration::get_step_profile).post(handlers::registration::post_profile))
+        .route("/inscription/step/{step}", get(handlers::registration::get_step))
         .route("/connexion", get(handlers::auth::login_page).post(handlers::auth::login))
         .route("/deconnexion", post(handlers::auth::logout))
         .route("/compte", get(handlers::auth::account))
