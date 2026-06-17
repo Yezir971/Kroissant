@@ -171,9 +171,24 @@ input {
 }
 
 .button-secondary {
+  background: #E8E8E8;
+  border-color: #E8E8E8;
+  color: var(--ink);
+}
+
+.button-google {
   background: white;
-  border-color: var(--brand-dark);
-  color: var(--brand-deep);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.button-google img {
+  width: 20px;
+  height: 20px;
 }
 
 .button-saved {
@@ -1044,45 +1059,98 @@ input {
 }
 
 .auth-card {
-  width: min(420px, 100%);
-  padding: 34px;
-  background: linear-gradient(180deg, #ffe1d0, #ffe8d8);
+  width: min(440px, 100%);
+  padding: 48px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .auth-card h1 {
-  margin: 0;
+  margin: 0 0 40px;
   font-family: var(--font-title);
-  text-align: center;
-  font-size: 1.35rem;
-}
-
-.auth-card p {
-  margin: 10px 0 20px;
-  color: var(--muted);
-  text-align: center;
+  text-align: left;
+  font-size: 2.2rem;
+  line-height: 1.1;
+  color: #4e301e;
 }
 
 .auth-form {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .auth-form label {
   display: grid;
-  gap: 7px;
-  color: var(--brand-dark);
-  font-weight: 800;
-  font-size: 0.86rem;
+  gap: 8px;
+  color: #25211d;
+  font-weight: 500;
+  font-size: 1.1rem;
 }
 
-.auth-form input {
+.auth-form input:not([type="checkbox"]) {
   width: 100%;
-  min-height: 50px;
+  min-height: 54px;
   border: 1px solid #d6c9bd;
   border-radius: 8px;
-  padding: 0 14px;
-  background: #faf5ee;
+  padding: 0 16px;
+  background: #EDEDED;
   color: var(--ink);
+}
+
+.auth-form input::placeholder {
+  color: #c0b5ac;
+}
+
+.forgot-password {
+  display: block;
+  margin-top: -16px;
+  color: #A66844;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c0b5ac;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.remember-me input {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 1px solid #d6c9bd;
+  border-radius: 4px;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.remember-me input:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #A66844;
+  font-size: 14px;
+}
+
+.auth-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.auth-actions .button {
+  min-height: 54px;
+  font-size: 1.05rem;
 }
 
 .password-wrapper {

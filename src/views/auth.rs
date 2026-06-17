@@ -15,26 +15,28 @@ pub fn render_auth_page(
             "Accueil",
             Some("/"),
             &user.cloned(),
-            r#"<main class="centered-page"><section class="auth-card"><h1>Vous etes deja connecte.</h1><a class="button button-primary full-width" href="/compte">Ouvrir mon compte</a></section></main>"#.to_string(),
+            r#"<main class="centered-page"><section class="auth-card"><h1>Vous êtes déjà connecté.</h1><a class="button button-primary full-width" href="/compte">Ouvrir mon compte</a></section></main>"#.to_string(),
         );
     }
 
-    let (title, subtitle, action, primary, secondary_href, secondary_text) = match mode {
+    let (page_title, title, subtitle, action, primary, secondary_href, secondary_text) = match mode {
         AuthMode::Register => (
-            "Creez votre compte gratuit",
-            "Sauvegardez vos contenus et retrouvez-les a chaque visite.",
+            "Inscription - Ploopy",
+            "Bonjour, <br> Bienvenue !",
+            "Creez votre compte gratuit pour sauvegarder vos contenus.",
             "/inscription",
-            "Creer mon compte",
+            "S'inscrire",
             "/connexion",
             "Se connecter",
         ),
         AuthMode::Login => (
-            "Connectez-vous",
-            "Reprenez la ou vous vous etiez arrete.",
+            "Connexion - Ploopy",
+            "Bonjour, <br> Ravis de vous revoir !",
+            "",
             "/connexion",
             "Se connecter",
             "/inscription",
-            "Creer un compte",
+            "S'inscrire",
         ),
     };
 
@@ -57,30 +59,44 @@ pub fn render_auth_page(
         "".to_string()
     };
 
+    let subtitle_html = if subtitle.is_empty() {
+        "".to_string()
+    } else {
+        format!("<p>{}</p>", h(subtitle))
+    };
+
     let body = format!(
         r#"
         <main class="centered-page">
             <section class="auth-card">
                 <h1>{}</h1>
-                <p>{}</p>
+                {}
                 {}
                 <form method="post" action="{}" class="auth-form">
                     <input type="hidden" name="next" value="{}">
-                    <label>Adresse email<input name="email" type="email" placeholder="votre@email.com" autocomplete="email" required></label>
+                    <label>E-mail<input name="email" type="email" placeholder="exemple@exemple" autocomplete="email" required></label>
                     <label>Mot de passe
                         <div class="password-wrapper">
-                            <input id="password-input" name="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required>
+                            <input id="password-input" name="password" type="password" placeholder="" autocomplete="current-password" minlength="8" required>
                             <button type="button" class="password-toggle" onclick="togglePassword('password-input', 'password-icon')">
                                 <img id="password-icon" src="/static/img/oeil.svg" alt="Afficher le mot de passe">
                             </button>
                         </div>
                     </label>
+                    <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember_me"> Se souvenir de moi
+                    </label>
                     {}
-                    <button class="button button-primary full-width" type="submit">{}</button>
+                    <div class="auth-actions">
+                        <button class="button button-primary full-width" type="submit">{}</button>
+                        <a class="button button-secondary full-width" href="{}">{}</a>
+                        <a class="button button-google full-width" href="/auth/google">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google Logo">
+                            Se connecter avec Google
+                        </a>
+                    </div>
                 </form>
-                <div class="divider">ou</div>
-                <a class="button button-secondary full-width" href="{}">{}</a>
-                <small>Gratuit · Aucune carte requise · Donnees securisees</small>
             </section>
         </main>
         <script>
@@ -97,8 +113,8 @@ pub fn render_auth_page(
             }}
         </script>
         "#,
-        h(title),
-        h(subtitle),
+        title, 
+        subtitle_html,
         error_html,
         action,
         a(&next_value),
@@ -109,7 +125,7 @@ pub fn render_auth_page(
     );
 
     render_page(
-        title,
+        page_title,
         "Fiche contenu",
         Some(&next_value),
         &None::<User>,
