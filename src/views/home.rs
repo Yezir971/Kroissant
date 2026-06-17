@@ -11,9 +11,9 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
                 <div class="hero-copy">
                     <h1>La plateforme qui sélectionne les 
 dessins animés adaptés à votre enfant.</h1>
-                    <p class="hero-copy-text">Une bibliotheque de contenus selectionnes pour leurs benefices developpementaux prouves: langage, empathie, resilience, creativite.</p>
+                    <p class="hero-copy-text">Chaque contenu est évalué selon des critères pédagogiques avant d'apparaître dans la bibliothèque. Vous parcourez, vous choisissez, vous regardez. Tout ce qui s'affiche est déjà vérifié.</p>
                     <div class="hero-actions">
-                        <a class="button button-primary" href="/bibliotheque">Decouvrir les contenus</a>
+                        <a class="button button-primary" href="/inscription">Je m'inscris et découvre</a>
                         <a class="button button-outline-brown" href="/science">Comment sont choisis nos contenus</a>
                         <button id="install-button" class="button button-primary" style="display: none;">Installer l'application</button>
                     </div>
