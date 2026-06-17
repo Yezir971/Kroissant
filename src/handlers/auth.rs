@@ -13,6 +13,40 @@ use crate::views;
 
 pub const REGISTRATION_COOKIE: &str = "kroissant_registration";
 
+use std::env;
+use uuid::Uuid;
+
+pub const GOOGLE_STATE_COOKIE: &str = "google_oauth_state";
+
+/// Redirige vers Google pour l'authentification.
+pub async fn google_auth() -> AppResult<Response> {
+    let client_id = env::var("GOOGLE_CLIENT_ID")
+        .map_err(|_| AppError::Internal(anyhow::anyhow!("GOOGLE_CLIENT_ID non défini")))?;
+    let redirect_uri = env::var("GOOGLE_REDIRECT_URI")
+        .map_err(|_| AppError::Internal(anyhow::anyhow!("GOOGLE_REDIRECT_URI non défini")))?;
+
+    let state = Uuid::new_v4().to_string();
+
+    // Construction manuelle de l'URL Google OAuth2
+    // Scope: email profile
+    let auth_url = format!(
+        "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri={}&response_type=code&scope=email%20profile&state={}",
+        client_id,
+        urlencoding::encode(&redirect_uri),
+        state
+    );
+
+    let mut response = Redirect::to(&auth_url).into_response();
+    
+    // Cookie d'état (CSRF) valide 5 minutes
+    let cookie = format!("{GOOGLE_STATE_COOKIE}={state}; HttpOnly; SameSite=Lax; Path=/; Max-Age=300");
+    if let Ok(value) = HeaderValue::from_str(&cookie) {
+        response.headers_mut().insert(header::SET_COOKIE, value);
+    }
+
+    Ok(response)
+}
+
 /// Action d'inscription (dépréciée).
 pub async fn register_deprecated() -> impl IntoResponse {
     (
