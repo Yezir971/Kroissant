@@ -10,4 +10,5 @@ CONVENTION.md
 GEMINI.md
 TASKS.md
 AUDIT.md
-.env*
+.env.developement
+.env.production
