@@ -51,7 +51,7 @@ pub fn render_page_with_class(
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>{}</title>
-            <link rel="stylesheet" href="/static/app.css">
+            <link rel="stylesheet" href="/static/app.css?v=13">
             <link rel="manifest" href="/manifest.json">
             <meta name="theme-color" content="#d06b12">
             <meta name="apple-mobile-web-app-capable" content="yes">
@@ -60,7 +60,7 @@ pub fn render_page_with_class(
             <link rel="apple-touch-icon" href="/static/img/bluey.svg">
             <link rel="icon" type="image/x-icon" href="/static/img/favicon.svg">
             <script src="/static/htmx.min.js"></script>
-            <script src="/static/app.js"></script>
+            <script src="/static/app.js?v=13"></script>
             <script src="/static/pwa-install.js"></script>
             <script>
                 if ('serviceWorker' in navigator) {{

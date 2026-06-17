@@ -76,7 +76,7 @@ pub fn render_home_platform_section(_active: &str, contents: &[Content]) -> Stri
 
 pub fn render_library_section(
     query: &crate::models::PlatformQuery,
-    tags: &[String],
+    _tags: &[String],
     series: &[TaggedSeries],
 ) -> String {
     format!(
@@ -85,12 +85,10 @@ pub fn render_library_section(
             <h1>Séries catégorisées par IA</h1>
             <p>Chaque contenu développe une compétence réelle chez votre enfant</p>
         </div>
-        {}
         <div class="card-grid library-grid ai-series-grid">
             {}
         </div>
         "##,
-        render_search_and_filters(query, tags),
         render_tagged_series_or_empty(series, query.tag.as_deref().or(query.skill.as_deref())),
     )
 }

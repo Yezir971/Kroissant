@@ -1,7 +1,7 @@
 //! Page d'accueil.
 use crate::models::{Content, User};
 use crate::views::components::{render_home_platform_section, render_cards};
-use crate::views::layout::render_page;
+use crate::views::layout::render_page_with_class;
 
 pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]) -> String {
     let body = format!(
@@ -100,7 +100,7 @@ dessins animés adaptés à votre enfant.</h1>
         render_cards(moment),
     );
 
-    render_page("Ploopy", "Accueil", None, user, body)
+    render_page_with_class("Ploopy", "Accueil", None, user, body, "home-page")
 }
 
 
