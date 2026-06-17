@@ -13,33 +13,140 @@ use crate::views;
 
 pub const REGISTRATION_COOKIE: &str = "kroissant_registration";
 
-use std::env;
 use uuid::Uuid;
+use serde::Deserialize;
+use chrono::{Duration, Utc};
+use crate::models::Claims;
+use crate::auth::jwt::create_token;
 
 pub const GOOGLE_STATE_COOKIE: &str = "google_oauth_state";
 
-/// Redirige vers Google pour l'authentification.
-pub async fn google_auth() -> AppResult<Response> {
-    let client_id = env::var("GOOGLE_CLIENT_ID")
-        .map_err(|_| AppError::Internal(anyhow::anyhow!("GOOGLE_CLIENT_ID non défini")))?;
-    let redirect_uri = env::var("GOOGLE_REDIRECT_URI")
-        .map_err(|_| AppError::Internal(anyhow::anyhow!("GOOGLE_REDIRECT_URI non défini")))?;
+#[derive(Debug, Deserialize)]
+pub struct GoogleCallbackQuery {
+    pub code: String,
+    pub state: String,
+}
 
-    let state = Uuid::new_v4().to_string();
+#[derive(Debug, Deserialize)]
+struct GoogleTokenResponse {
+    access_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoogleUserInfo {
+    email: String,
+    name: String,
+}
+
+/// Callback de Google OAuth2.
+pub async fn google_callback(
+    State(state): State<AppState>,
+    headers: header::HeaderMap,
+    Query(query): Query<GoogleCallbackQuery>,
+) -> AppResult<Response> {
+    // 1. Vérifier le state CSRF
+    let cookie_state = get_cookie_value(&headers, GOOGLE_STATE_COOKIE)
+        .ok_or_else(|| AppError::Auth("Cookie de session OAuth manquant".to_string()))?;
+
+    if cookie_state != query.state {
+        return Err(AppError::Auth("Erreur de sécurité CSRF : state mismatch".to_string()));
+    }
+
+    // 2. Échanger le code contre un token
+    let client = reqwest::Client::new();
+    let params = [
+        ("code", query.code.as_str()),
+        ("client_id", state.config.google_client_id.as_str()),
+        ("client_secret", state.config.google_client_secret.as_str()),
+        ("redirect_uri", state.config.google_redirect_uri.as_str()),
+        ("grant_type", "authorization_code"),
+    ];
+
+    let token_res = client
+        .post("https://oauth2.googleapis.com/token")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur échange token Google: {}", e)))?
+        .json::<GoogleTokenResponse>()
+        .await
+        .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur parsing token Google: {}", e)))?;
+
+    // 3. Récupérer les infos utilisateur
+    let user_info = client
+        .get("https://www.googleapis.com/oauth2/v3/userinfo")
+        .bearer_auth(token_res.access_token)
+        .send()
+        .await
+        .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur récup infos Google: {}", e)))?
+        .json::<GoogleUserInfo>()
+        .await
+        .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur parsing infos Google: {}", e)))?;
+
+    // 4. Logique métier : Login ou Création
+    let email = user_info.email.to_lowercase();
+    
+    let user_id = if let Some((id, _)) = state.user_repo.get_by_email(&email).await? {
+        id
+    } else {
+        // Nouvel utilisateur via Google
+        state.user_repo.create_user(&email, "OAUTH_EXTERNAL_USER", &user_info.name).await?
+    };
+
+    // 5. Générer JWT
+    let claims = Claims {
+        sub: user_id,
+        email: email.clone(),
+        exp: (Utc::now() + Duration::days(7)).timestamp() as usize,
+    };
+    let token = create_token(&claims, &state.jwt_secret)?;
+
+    // 6. Préparer la réponse
+    let mut response = Redirect::to("/bibliotheque").into_response();
+    
+    // Poser le cookie d'auth
+    let auth_cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
+    if let Ok(value) = HeaderValue::from_str(&auth_cookie) {
+        response.headers_mut().insert(header::SET_COOKIE, value);
+    }
+
+    // Supprimer le cookie state
+    let clear_state_cookie = format!("{GOOGLE_STATE_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+    if let Ok(value) = HeaderValue::from_str(&clear_state_cookie) {
+        response.headers_mut().append(header::SET_COOKIE, value);
+    }
+
+    Ok(response)
+}
+
+fn get_cookie_value(headers: &header::HeaderMap, name: &str) -> Option<String> {
+    headers.get(header::COOKIE)?
+        .to_str().ok()?
+        .split(';')
+        .find_map(|c| {
+            let mut parts = c.trim().splitn(2, '=');
+            let key = parts.next()?;
+            let val = parts.next()?;
+            if key == name { Some(val.to_string()) } else { None }
+        })
+}
+
+/// Redirige vers Google pour l'authentification.
+pub async fn google_auth(State(state): State<AppState>) -> AppResult<Response> {
+    let state_token = Uuid::new_v4().to_string();
 
     // Construction manuelle de l'URL Google OAuth2
-    // Scope: email profile
     let auth_url = format!(
         "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri={}&response_type=code&scope=email%20profile&state={}",
-        client_id,
-        urlencoding::encode(&redirect_uri),
-        state
+        state.config.google_client_id,
+        urlencoding::encode(&state.config.google_redirect_uri),
+        state_token
     );
 
     let mut response = Redirect::to(&auth_url).into_response();
     
     // Cookie d'état (CSRF) valide 5 minutes
-    let cookie = format!("{GOOGLE_STATE_COOKIE}={state}; HttpOnly; SameSite=Lax; Path=/; Max-Age=300");
+    let cookie = format!("{GOOGLE_STATE_COOKIE}={state_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=300");
     if let Ok(value) = HeaderValue::from_str(&cookie) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }

@@ -28,6 +28,7 @@ pub fn create_router(state: AppState) -> Router {
         
         // Authentification & Compte
         .route("/auth/google", get(handlers::auth::google_auth))
+        .route("/auth/google/callback", get(handlers::auth::google_callback))
         .route("/inscription", get(handlers::registration::registration_shell).post(handlers::auth::register_deprecated))
         .route("/inscription/verify", get(handlers::registration::verify_email))
         .route("/inscription/step/email", get(handlers::registration::get_step_email).post(handlers::registration::post_email))

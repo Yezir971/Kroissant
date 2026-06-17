@@ -5,6 +5,7 @@ use crate::repositories::user::UserRepository;
 use crate::services::auth::AuthService;
 use crate::services::content::ContentService;
 use crate::services::email::EmailService;
+use crate::config::Config;
 use axum::extract::FromRef;
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -14,6 +15,8 @@ use std::sync::Arc;
 pub struct AppState {
     /// Pool de connexion SQLite.
     pub db: SqlitePool,
+    /// Configuration de l'application.
+    pub config: Config,
     /// Secret utilisé pour signer les tokens JWT.
     pub jwt_secret: String,
     /// Repository pour l'accès aux contenus.
@@ -32,8 +35,10 @@ pub struct AppState {
 
 impl AppState {
     /// Crée une nouvelle instance de l'état de l'application.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         db: SqlitePool,
+        config: Config,
         jwt_secret: String,
         content_repo: Arc<dyn ContentRepository>,
         user_repo: Arc<dyn UserRepository>,
@@ -44,6 +49,7 @@ impl AppState {
     ) -> Self {
         Self {
             db,
+            config,
             jwt_secret,
             content_repo,
             user_repo,
@@ -61,6 +67,12 @@ impl AppState {
 impl FromRef<AppState> for SqlitePool {
     fn from_ref(state: &AppState) -> Self {
         state.db.clone()
+    }
+}
+
+impl FromRef<AppState> for Config {
+    fn from_ref(state: &AppState) -> Self {
+        state.config.clone()
     }
 }
 
