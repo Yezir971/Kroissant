@@ -1,6 +1,6 @@
 //! Page d'accueil.
 use crate::models::{Content, User};
-use crate::views::components::{render_home_platform_section, render_cards};
+use crate::views::components::{render_cards, render_home_platform_section};
 use crate::views::layout::render_page_with_class;
 
 pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]) -> String {
@@ -9,11 +9,11 @@ pub fn render_home(user: &Option<User>, selected: &[Content], moment: &[Content]
         <section class="hero">
             <div class="hero-inner">
                 <div class="hero-copy">
-                    <h1>La plateforme qui sélectionne les 
-dessins animés adaptés à votre enfant.</h1>
-                    <p class="hero-copy-text">Chaque contenu est évalué selon des critères pédagogiques avant d'apparaître dans la bibliothèque. Vous parcourez, vous choisissez, vous regardez. Tout ce qui s'affiche est déjà vérifié.</p>
+                    <h1>La plateforme qui selectionne les
+dessins animes adaptes a votre enfant.</h1>
+                    <p class="hero-copy-text">Chaque contenu est evalue selon des criteres pedagogiques avant d'apparaitre dans la bibliotheque. Vous parcourez, vous choisissez, vous regardez. Tout ce qui s'affiche est deja verifie.</p>
                     <div class="hero-actions">
-                        <a class="button button-primary" href="/inscription">Je m'inscris et découvre</a>
+                        <a class="button button-primary" href="/inscription">Je m'inscris et decouvre</a>
                         <a class="button button-outline-brown" href="/science">Comment sont choisis nos contenus</a>
                         <button id="install-button" class="button button-primary" style="display: none;">Installer l'application</button>
                     </div>
@@ -38,41 +38,29 @@ dessins animés adaptés à votre enfant.</h1>
             <section class="how-it-works">
                 <div class="how-it-works-grid">
                     <div class="how-info">
-                        <h2>Comment ça marche</h2>
-                        <p>Chaque contenu est évalué selon des critères pédagogiques avant d'apparaître dans la bibliothèque.</p>
-                        <div class="testimonials">
-                            <p>"tout est bien expliqué, plateforme dédiée aux enfants"</p>
-                            <p>"c'est bien explicite, pas du tout complexe, facile d'utilisation"</p>
-                        </div>
-                        <a href="/science" class="button button-primary">Découvrir notre méthode</a>
+                        <h2>Comment ca marche</h2>
+                        <p>Trois etapes, zero mauvaise surprise.</p>
                     </div>
                     <div class="how-steps">
                         <div class="step-item">
                             <span class="step-num">1</span>
                             <div>
-                                <h3>Se connecter</h3>
-                                <p>YouTube, Netflix ou Disney+</p>
+                                <h3>Parcourez la bibliotheque</h3>
+                                <p>Des dessins animes ranges par valeur : courage, empathie, langage...</p>
                             </div>
                         </div>
                         <div class="step-item">
                             <span class="step-num">2</span>
                             <div>
-                                <h3>Choisir un dessin animé</h3>
-                                <p>YouTube, Netflix ou Disney+</p>
+                                <h3>Tout est deja verifie, vous pouvez en profiter</h3>
+                                <p>Chaque contenu passe nos criteres pediatriques avant d'apparaitre.</p>
                             </div>
                         </div>
                         <div class="step-item">
                             <span class="step-num">3</span>
                             <div>
-                                <h3>Lancer le dessin animé</h3>
-                                <p>YouTube, Netflix ou Disney+</p>
-                            </div>
-                        </div>
-                        <div class="step-item">
-                            <span class="step-num">4</span>
-                            <div>
-                                <h3>Profiter de votre moment</h3>
-                                <p>YouTube, Netflix ou Disney+</p>
+                                <h3>Regardez l'esprit tranquille</h3>
+                                <p>Vous lancez le contenu sur la plateforme de votre choix, sans surprise.</p>
                             </div>
                         </div>
                     </div>
@@ -102,6 +90,3 @@ dessins animés adaptés à votre enfant.</h1>
 
     render_page_with_class("Ploopy", "Accueil", None, user, body, "home-page")
 }
-
-
-
