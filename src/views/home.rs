@@ -78,6 +78,52 @@ dessins animes adaptes a votre enfant.</h1>
             </section>
         </main>
 
+        <section class="section-block home-testimonial">
+            <div class="testimonial-inner">
+                <div class="stars">★★★★★</div>
+                <h2 class="testimonial-title">“Très propre et simple à utiliser.”</h2>
+                <p class="testimonial-text">Le design se veut simple et épuré, aussi bien dans son aspect visuel que dans son utilisation au quotidien.</p>
+                <div class="testimonial-user">
+                    <div class="avatar">M</div>
+                    <div class="user-info">
+                        <strong>Marine</strong>
+                        <span class="role">Test utilisateur</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-block home-criteria">
+            <div class="section-heading">
+                <h2>Comment on sélectionne nos contenus</h2>
+                <p>Chaque contenu est validé selon des critères pédiatriques scientifiquement établis.</p>
+            </div>
+            <div class="criteria-grid">
+                <div class="criteria-card">
+                    <div class="pill-row"><span class="pill resilience">Courage</span></div>
+                    <p>Capacité à surmonter les obstacles. Modélisée par les personnages via l’échec, la persévérance et la récupération émotionnelle.</p>
+                    <div class="criteria-source">
+                        <span>Analyse 150 épisodes</span>
+                        <span>Bluey · Tandfonline, 2025</span>
+                    </div>
+                </div>
+                <div class="criteria-card">
+                    <div class="pill-row"><span class="pill empathie">Empathie</span></div>
+                    <p>Compréhension du point de vue de l’autre. Les contenus mettent en scène des situations où le personnage doit se mettre à la place d’autrui.</p>
+                    <div class="criteria-source">
+                        <span>Prithviraj et al., 2024</span>
+                    </div>
+                </div>
+                <div class="criteria-card">
+                    <div class="pill-row"><span class="pill language">Langage</span></div>
+                    <p>Vocabulaire, narration, compréhension orale. Les programmes éducatifs favorisent activement ces dimensions.</p>
+                    <div class="criteria-source">
+                        <span>Cohorte Elfe / INSERM, 2023</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="footer-cta">
             <div class="footer-cta-inner">
                 <h2>Offrez à votre enfant des écrans qui le font grandir.</h2>

@@ -524,6 +524,115 @@ input {
   opacity: 0.9;
 }
 
+/* Testimonials & Criteria */
+.home-testimonial {
+  text-align: center;
+  max-width: 800px;
+  margin: 64px auto !important;
+}
+
+.testimonial-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.stars {
+  color: #FFB443;
+  font-size: 1.5rem;
+  letter-spacing: 4px;
+}
+
+.testimonial-title {
+  font-size: 2.2rem !important;
+  line-height: 1.2;
+}
+
+.testimonial-text {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 600px;
+}
+
+.testimonial-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.testimonial-user .avatar {
+  width: 44px;
+  height: 44px;
+  background: #FF6B4A;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.testimonial-user .user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.testimonial-user .role {
+  color: var(--muted);
+}
+
+.testimonial-user .role::before {
+  content: "·";
+  margin-right: 8px;
+}
+
+.home-criteria {
+  background: transparent;
+}
+
+.criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.criteria-card {
+  background: white;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(53, 39, 27, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.criteria-card p {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+}
+
+.criteria-source {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.criteria-card .pill.resilience { background: #ffe1d1; }
+.criteria-card .pill.empathie { background: #fff0cf; }
+.criteria-card .pill.language { background: #e5dfff; }
+
 .stat-band span {
   display: inline-flex;
   align-items: center;
