@@ -1,13 +1,13 @@
 //! Handlers pour les contenus individuels.
+use crate::app_state::AppState;
+use crate::auth::AuthUser;
+use crate::error::AppResult;
+use crate::views;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
 };
-use crate::app_state::AppState;
-use crate::error::AppResult;
-use crate::auth::AuthUser;
-use crate::views;
 
 /// Page de détail d'un contenu.
 pub async fn content_detail(
@@ -32,11 +32,7 @@ pub async fn content_detail(
     let benefit = state.content_service.get_benefit_for(&content.skill);
 
     Ok(Html(views::render_content_detail(
-        &user,
-        &content,
-        saved,
-        &similar,
-        &benefit,
+        &user, &content, saved, &similar, &benefit,
     ))
     .into_response())
 }
@@ -48,11 +44,18 @@ pub async fn toggle_save(
     Path(id): Path<i64>,
 ) -> AppResult<Response> {
     let Some(user) = user else {
-        return Ok(Html(r#"<p><a href="/inscription">Inscrivez-vous</a> pour sauvegarder ce contenu.</p>"#.to_string()).into_response());
+        return Ok(Html(
+            r#"<p><a href="/inscription">Inscrivez-vous</a> pour sauvegarder ce contenu.</p>"#
+                .to_string(),
+        )
+        .into_response());
     };
 
     let saved = state.content_service.toggle_save(user.id, id).await?;
-    let content = state.content_repo.get_by_id(id).await?
+    let content = state
+        .content_repo
+        .get_by_id(id)
+        .await?
         .ok_or_else(|| crate::error::AppError::NotFound("Contenu introuvable".to_string()))?;
 
     Ok(Html(views::render_save_panel(&content, Some(&user), saved)).into_response())
@@ -73,7 +76,10 @@ pub async fn go_to_source(
     };
 
     if let Some(user) = user {
-        state.content_service.log_watch_history(user.id, content.id).await?;
+        state
+            .content_service
+            .log_watch_history(user.id, content.id)
+            .await?;
     }
 
     Ok(Redirect::to(&content.source_url).into_response())

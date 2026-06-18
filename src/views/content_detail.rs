@@ -1,6 +1,6 @@
 //! Page de détail d'un contenu.
 use crate::models::{Benefit, Content, User};
-use crate::views::components::{render_save_panel, render_cards};
+use crate::views::components::{render_cards, render_save_panel};
 use crate::views::layout::render_page;
 use crate::views::utils::{a, h};
 

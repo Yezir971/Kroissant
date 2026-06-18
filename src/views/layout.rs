@@ -84,7 +84,11 @@ pub fn render_page_with_class(
                                     <img src="/static/img/ploopy.svg" alt="Ploopy">
                                     </a>
                 <p>© 2026 Ploopy - Tous droits reserves.</p>
-                <a class="footer-link" href="/science">Comment sont choisis nos contenus</a>
+                <nav class="footer-links" aria-label="Liens legaux">
+                    <a class="footer-link" href="/science">Selection des contenus</a>
+                    <a class="footer-link" href="/conditions-utilisation">Conditions</a>
+                    <a class="footer-link" href="/politique-de-confidentialite">Confidentialite</a>
+                </nav>
             </footer>
         </body>
         </html>"##,

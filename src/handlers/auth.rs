@@ -1,23 +1,23 @@
 //! Handlers pour l'authentification et le compte utilisateur.
-use axum::{
-    extract::{Form, Query, State},
-    http::{header, HeaderValue, StatusCode},
-    response::{Html, IntoResponse, Redirect, Response},
-};
 use crate::app_state::AppState;
+use crate::auth::{AUTH_COOKIE, AuthUser};
 use crate::error::{AppError, AppResult};
 use crate::models::{AuthForm, AuthMode, AuthQuery, User};
-use crate::auth::{AuthUser, AUTH_COOKIE};
 use crate::utils::clean_next;
 use crate::views;
+use axum::{
+    extract::{Form, Query, State},
+    http::{HeaderValue, StatusCode, header},
+    response::{Html, IntoResponse, Redirect, Response},
+};
 
 pub const REGISTRATION_COOKIE: &str = "kroissant_registration";
 
-use uuid::Uuid;
-use serde::Deserialize;
-use chrono::{Duration, Utc};
-use crate::models::Claims;
 use crate::auth::jwt::create_token;
+use crate::models::Claims;
+use chrono::{Duration, Utc};
+use serde::Deserialize;
+use uuid::Uuid;
 
 pub const GOOGLE_STATE_COOKIE: &str = "google_oauth_state";
 
@@ -49,7 +49,9 @@ pub async fn google_callback(
         .ok_or_else(|| AppError::Auth("Cookie de session OAuth manquant".to_string()))?;
 
     if cookie_state != query.state {
-        return Err(AppError::Auth("Erreur de sécurité CSRF : state mismatch".to_string()));
+        return Err(AppError::Auth(
+            "Erreur de sécurité CSRF : state mismatch".to_string(),
+        ));
     }
 
     // 2. Échanger le code contre un token
@@ -85,12 +87,15 @@ pub async fn google_callback(
 
     // 4. Logique métier : Login ou Création
     let email = user_info.email.to_lowercase();
-    
+
     let user_id = if let Some((id, _)) = state.user_repo.get_by_email(&email).await? {
         id
     } else {
         // Nouvel utilisateur via Google
-        state.user_repo.create_user(&email, "OAUTH_EXTERNAL_USER", &user_info.name).await?
+        state
+            .user_repo
+            .create_user(&email, "OAUTH_EXTERNAL_USER", &user_info.name)
+            .await?
     };
 
     // 5. Générer JWT
@@ -103,15 +108,17 @@ pub async fn google_callback(
 
     // 6. Préparer la réponse
     let mut response = Redirect::to("/bibliotheque").into_response();
-    
+
     // Poser le cookie d'auth
-    let auth_cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
+    let auth_cookie =
+        format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
     if let Ok(value) = HeaderValue::from_str(&auth_cookie) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
 
     // Supprimer le cookie state
-    let clear_state_cookie = format!("{GOOGLE_STATE_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+    let clear_state_cookie =
+        format!("{GOOGLE_STATE_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
     if let Ok(value) = HeaderValue::from_str(&clear_state_cookie) {
         response.headers_mut().append(header::SET_COOKIE, value);
     }
@@ -120,14 +127,20 @@ pub async fn google_callback(
 }
 
 fn get_cookie_value(headers: &header::HeaderMap, name: &str) -> Option<String> {
-    headers.get(header::COOKIE)?
-        .to_str().ok()?
+    headers
+        .get(header::COOKIE)?
+        .to_str()
+        .ok()?
         .split(';')
         .find_map(|c| {
             let mut parts = c.trim().splitn(2, '=');
             let key = parts.next()?;
             let val = parts.next()?;
-            if key == name { Some(val.to_string()) } else { None }
+            if key == name {
+                Some(val.to_string())
+            } else {
+                None
+            }
         })
 }
 
@@ -144,9 +157,10 @@ pub async fn google_auth(State(state): State<AppState>) -> AppResult<Response> {
     );
 
     let mut response = Redirect::to(&auth_url).into_response();
-    
+
     // Cookie d'état (CSRF) valide 5 minutes
-    let cookie = format!("{GOOGLE_STATE_COOKIE}={state_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=300");
+    let cookie =
+        format!("{GOOGLE_STATE_COOKIE}={state_token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=300");
     if let Ok(value) = HeaderValue::from_str(&cookie) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
@@ -179,7 +193,10 @@ pub async fn login_page(
 }
 
 /// Action de connexion.
-pub async fn login(State(state): State<AppState>, Form(form): Form<AuthForm>) -> AppResult<Response> {
+pub async fn login(
+    State(state): State<AppState>,
+    Form(form): Form<AuthForm>,
+) -> AppResult<Response> {
     let next = clean_next(form.next.clone());
 
     match state.auth_service.login(&form.email, &form.password).await {

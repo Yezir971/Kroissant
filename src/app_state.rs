@@ -1,11 +1,11 @@
 //! État partagé de l'application.
+use crate::config::Config;
 use crate::repositories::content::ContentRepository;
 use crate::repositories::email_verification_repository::EmailVerificationRepository;
 use crate::repositories::user::UserRepository;
 use crate::services::auth::AuthService;
 use crate::services::content::ContentService;
 use crate::services::email::EmailService;
-use crate::config::Config;
 use axum::extract::FromRef;
 use sqlx::SqlitePool;
 use std::sync::Arc;

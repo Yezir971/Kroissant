@@ -1,18 +1,18 @@
 //! Handlers pour le parcours d'inscription multi-étapes.
+use crate::app_state::AppState;
+use crate::auth::password::hash_password;
+use crate::auth::{AUTH_COOKIE, AuthUser, jwt::create_token};
+use crate::error::AppResult;
+use crate::handlers::auth::REGISTRATION_COOKIE;
+use crate::models::{Claims, RegistrationStep, VerifyQuery};
+use crate::views;
 use axum::{
-    extract::{Path, State, Query, Form},
-    http::{header, HeaderValue, StatusCode},
+    extract::{Form, Path, Query, State},
+    http::{HeaderValue, StatusCode, header},
     response::{Html, IntoResponse, Redirect, Response},
 };
-use crate::app_state::AppState;
-use crate::error::AppResult;
-use crate::models::{RegistrationStep, VerifyQuery, Claims};
-use crate::auth::{AuthUser, AUTH_COOKIE, jwt::create_token};
-use crate::views;
-use crate::handlers::auth::REGISTRATION_COOKIE;
-use crate::auth::password::hash_password;
-use std::str::FromStr;
 use chrono::{Duration, Utc};
+use std::str::FromStr;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct RegistrationData {
@@ -26,7 +26,7 @@ pub async fn registration_shell(
     State(_state): State<AppState>,
 ) -> AppResult<Html<String>> {
     let initial_content = views::registration::step_entry::render();
-    
+
     let body = format!(
         r#"
         <main class="centered-page">
@@ -60,15 +60,24 @@ pub async fn get_step(
 }
 
 /// Handlers spécifiques pour les routes statiques (évite les conflits 405).
-pub async fn get_step_email(headers: axum::http::HeaderMap, state: State<AppState>) -> AppResult<Response> {
+pub async fn get_step_email(
+    headers: axum::http::HeaderMap,
+    state: State<AppState>,
+) -> AppResult<Response> {
     get_step_internal("email", headers, state).await
 }
 
-pub async fn get_step_password(headers: axum::http::HeaderMap, state: State<AppState>) -> AppResult<Response> {
+pub async fn get_step_password(
+    headers: axum::http::HeaderMap,
+    state: State<AppState>,
+) -> AppResult<Response> {
     get_step_internal("password", headers, state).await
 }
 
-pub async fn get_step_profile(headers: axum::http::HeaderMap, state: State<AppState>) -> AppResult<Response> {
+pub async fn get_step_profile(
+    headers: axum::http::HeaderMap,
+    state: State<AppState>,
+) -> AppResult<Response> {
     get_step_internal("profile", headers, state).await
 }
 
@@ -79,7 +88,7 @@ async fn get_step_internal(
     State(state): State<AppState>,
 ) -> AppResult<Response> {
     tracing::debug!("Rendu de l'étape: {}", step_name);
-    
+
     let Ok(step) = RegistrationStep::from_str(step_name) else {
         return Ok(StatusCode::NOT_FOUND.into_response());
     };
@@ -93,7 +102,7 @@ async fn get_step_internal(
                 .map(|d| d.email)
                 .unwrap_or_else(|| "votre e-mail".to_string());
             views::registration::step_email_sent::render(&email)
-        },
+        }
         RegistrationStep::Password => views::registration::step_password::render(None),
         RegistrationStep::Profile => views::registration::step_profile::render(None),
         _ => format!("<div>Étape : {} (Bientôt disponible)</div>", step),
@@ -121,7 +130,8 @@ async fn get_step_internal(
             Some("/"),
             &user.0,
             body,
-        )).into_response())
+        ))
+        .into_response())
     } else {
         // Sinon on renvoie juste le fragment
         Ok(Html(partial_html).into_response())
@@ -141,20 +151,32 @@ pub async fn post_email(
     let email = form.email.trim().to_lowercase();
 
     if !email.contains('@') || !email.contains('.') {
-        return Ok(Html(views::registration::step_email::render(Some("Format d'adresse invalide."))).into_response());
+        return Ok(Html(views::registration::step_email::render(Some(
+            "Format d'adresse invalide.",
+        )))
+        .into_response());
     }
 
     if state.user_repo.get_by_email(&email).await?.is_some() {
-        return Ok(Html(views::registration::step_email::render(Some("Cette adresse est déjà utilisée."))).into_response());
+        return Ok(Html(views::registration::step_email::render(Some(
+            "Cette adresse est déjà utilisée.",
+        )))
+        .into_response());
     }
 
-    let data = RegistrationData { email: email.clone(), password_hash: None };
+    let data = RegistrationData {
+        email: email.clone(),
+        password_hash: None,
+    };
     let cookie_value = serde_json::to_string(&data).unwrap_or_default();
 
     state.email_service.send_verification_email(&email).await?;
 
     let mut response = Html(views::registration::step_email_sent::render(&email)).into_response();
-    let cookie = format!("{REGISTRATION_COOKIE}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600", cookie_value);
+    let cookie = format!(
+        "{REGISTRATION_COOKIE}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600",
+        cookie_value
+    );
     if let Ok(value) = HeaderValue::from_str(&cookie) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
@@ -175,34 +197,45 @@ pub async fn post_password(
     let Some(cookie_str) = get_cookie(&headers, REGISTRATION_COOKIE) else {
         return Ok(Html(views::render_error_page(
             "Session d'inscription expirée. Veuillez recommencer.",
-        )).into_response());
+        ))
+        .into_response());
     };
 
     let Ok(mut data) = serde_json::from_str::<RegistrationData>(&cookie_str) else {
         return Ok(Html(views::render_error_page(
             "Données d'inscription corrompues. Veuillez recommencer.",
-        )).into_response());
+        ))
+        .into_response());
     };
 
     if form.password.len() < 8 {
-        return Ok(Html(views::registration::step_password::render(Some("Le mot de passe doit faire au moins 8 caractères."))).into_response());
+        return Ok(Html(views::registration::step_password::render(Some(
+            "Le mot de passe doit faire au moins 8 caractères.",
+        )))
+        .into_response());
     }
 
     if form.password != form.password_confirm {
-        return Ok(Html(views::registration::step_password::render(Some("Les mots de passe ne correspondent pas."))).into_response());
+        return Ok(Html(views::registration::step_password::render(Some(
+            "Les mots de passe ne correspondent pas.",
+        )))
+        .into_response());
     }
 
     let hash = hash_password(&form.password)?;
     data.password_hash = Some(hash);
 
     let updated_cookie = serde_json::to_string(&data).unwrap_or_default();
-    
+
     let mut response = Html(views::registration::step_profile::render(None)).into_response();
-    let cookie_header = format!("{REGISTRATION_COOKIE}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600", updated_cookie);
+    let cookie_header = format!(
+        "{REGISTRATION_COOKIE}={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=3600",
+        updated_cookie
+    );
     if let Ok(value) = HeaderValue::from_str(&cookie_header) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
-    
+
     Ok(response)
 }
 
@@ -220,27 +253,36 @@ pub async fn post_profile(
     let Some(cookie_str) = get_cookie(&headers, REGISTRATION_COOKIE) else {
         return Ok(Html(views::render_error_page(
             "Session d'inscription expirée. Veuillez recommencer.",
-        )).into_response());
+        ))
+        .into_response());
     };
 
     let Ok(data) = serde_json::from_str::<RegistrationData>(&cookie_str) else {
         return Ok(Html(views::render_error_page(
             "Données d'inscription corrompues. Veuillez recommencer.",
-        )).into_response());
+        ))
+        .into_response());
     };
 
     let Some(password_hash) = data.password_hash else {
         return Ok(Html(views::render_error_page(
             "Mot de passe manquant. Veuillez recommencer.",
-        )).into_response());
+        ))
+        .into_response());
     };
 
     let pseudo = form.pseudo.trim();
     if pseudo.len() < 2 || pseudo.len() > 30 {
-        return Ok(Html(views::registration::step_profile::render(Some("Le pseudo doit faire entre 2 et 30 caractères."))).into_response());
+        return Ok(Html(views::registration::step_profile::render(Some(
+            "Le pseudo doit faire entre 2 et 30 caractères.",
+        )))
+        .into_response());
     }
 
-    let user_id = state.user_repo.create_user(&data.email, &password_hash, pseudo).await?;
+    let user_id = state
+        .user_repo
+        .create_user(&data.email, &password_hash, pseudo)
+        .await?;
 
     let claims = Claims {
         sub: user_id,
@@ -250,13 +292,15 @@ pub async fn post_profile(
     let token = create_token(&claims, &state.jwt_secret)?;
 
     let mut response = Html(views::registration::step_success::render(pseudo)).into_response();
-    
-    let auth_cookie = format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
+
+    let auth_cookie =
+        format!("{AUTH_COOKIE}={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800");
     if let Ok(value) = HeaderValue::from_str(&auth_cookie) {
         response.headers_mut().insert(header::SET_COOKIE, value);
     }
 
-    let clear_reg_cookie = format!("{REGISTRATION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+    let clear_reg_cookie =
+        format!("{REGISTRATION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
     if let Ok(value) = HeaderValue::from_str(&clear_reg_cookie) {
         response.headers_mut().append(header::SET_COOKIE, value);
     }
@@ -295,13 +339,19 @@ pub async fn verify_email(
 }
 
 fn get_cookie(headers: &axum::http::HeaderMap, name: &str) -> Option<String> {
-    headers.get(header::COOKIE)?
-        .to_str().ok()?
+    headers
+        .get(header::COOKIE)?
+        .to_str()
+        .ok()?
         .split(';')
         .find_map(|c| {
             let mut parts = c.trim().splitn(2, '=');
             let key = parts.next()?;
             let val = parts.next()?;
-            if key == name { Some(val.to_string()) } else { None }
+            if key == name {
+                Some(val.to_string())
+            } else {
+                None
+            }
         })
 }

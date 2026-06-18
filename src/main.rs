@@ -1,14 +1,16 @@
 //! Kroissant - Curation de contenus développementaux pour enfants.
 use anyhow::{Context, Result};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
 use tokio::net::TcpListener;
-use std::sync::Arc;
 
-use kroissant::{AppState, routes, db};
-use kroissant::repositories::{SqliteContentRepository, SqliteUserRepository, SqliteEmailVerificationRepository};
-use kroissant::services::{AuthServiceImpl, ContentServiceImpl, EmailServiceImpl};
 use kroissant::config::Config;
+use kroissant::repositories::{
+    SqliteContentRepository, SqliteEmailVerificationRepository, SqliteUserRepository,
+};
+use kroissant::services::{AuthServiceImpl, ContentServiceImpl, EmailServiceImpl};
+use kroissant::{AppState, db, routes};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,11 +25,14 @@ async fn main() -> Result<()> {
 
     // Initialisation du logging
     tracing_subscriber::fmt()
-        .with_env_filter(env::var("RUST_LOG").unwrap_or_else(|_| "tower_http=debug,kroissant=debug".to_string()))
+        .with_env_filter(
+            env::var("RUST_LOG").unwrap_or_else(|_| "tower_http=debug,kroissant=debug".to_string()),
+        )
         .init();
 
     // Connexion à la base de données
-    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://data/kroissant.sqlite".to_string());
+    let database_url =
+        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://data/kroissant.sqlite".to_string());
     let connect_options = SqliteConnectOptions::from_str(&database_url)?
         .create_if_missing(true)
         .foreign_keys(true);
@@ -47,8 +52,14 @@ async fn main() -> Result<()> {
     let email_verification_repo = Arc::new(SqliteEmailVerificationRepository::new(pool.clone()));
 
     // Initialisation des Services
-    let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), config.jwt_secret.clone()));
-    let content_service = Arc::new(ContentServiceImpl::new(content_repo.clone(), user_repo.clone()));
+    let auth_service = Arc::new(AuthServiceImpl::new(
+        user_repo.clone(),
+        config.jwt_secret.clone(),
+    ));
+    let content_service = Arc::new(ContentServiceImpl::new(
+        content_repo.clone(),
+        user_repo.clone(),
+    ));
     let email_service = Arc::new(EmailServiceImpl::new(email_verification_repo.clone()));
 
     // État global
@@ -66,12 +77,17 @@ async fn main() -> Result<()> {
 
     // Démarrage du serveur
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let port = env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000);
-    let addr: SocketAddr = format!("{host}:{port}").parse().context("adresse d'ecoute invalide")?;
+    let port = env::var("PORT")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(3000);
+    let addr: SocketAddr = format!("{host}:{port}")
+        .parse()
+        .context("adresse d'ecoute invalide")?;
 
     let listener = TcpListener::bind(addr).await?;
     println!("Kroissant dev server: http://{addr}");
     axum::serve(listener, routes::create_router(state)).await?;
-    
+
     Ok(())
 }

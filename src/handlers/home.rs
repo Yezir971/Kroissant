@@ -1,18 +1,24 @@
 //! Handlers pour la page d'accueil et les sections générales.
+use crate::app_state::AppState;
+use crate::auth::AuthUser;
+use crate::error::AppResult;
+use crate::models::PlatformQuery;
+use crate::utils::normalize_platform;
+use crate::views;
 use axum::{
     extract::{Query, State},
     response::Html,
 };
-use crate::app_state::AppState;
-use crate::error::AppResult;
-use crate::models::PlatformQuery;
-use crate::auth::AuthUser;
-use crate::utils::normalize_platform;
-use crate::views;
 
 /// Page d'accueil principale.
-pub async fn home(AuthUser(user): AuthUser, State(state): State<AppState>) -> AppResult<Html<String>> {
-    let selected = state.content_repo.get_contents(Some("youtube"), Some(2)).await?;
+pub async fn home(
+    AuthUser(user): AuthUser,
+    State(state): State<AppState>,
+) -> AppResult<Html<String>> {
+    let selected = state
+        .content_repo
+        .get_contents(Some("youtube"), Some(2))
+        .await?;
     let moment = state.content_repo.get_contents(None, Some(2)).await?;
     Ok(Html(views::render_home(&user, &selected, &moment)))
 }
@@ -27,13 +33,28 @@ pub async fn home_partial(
         .content_repo
         .get_contents(Some(platform), Some(2))
         .await?;
-    Ok(Html(views::render_home_platform_section(platform, &contents)))
+    Ok(Html(views::render_home_platform_section(
+        platform, &contents,
+    )))
 }
 
 /// Page "Science" expliquant la sélection.
-pub async fn science(AuthUser(user): AuthUser, State(state): State<AppState>) -> AppResult<Html<String>> {
+pub async fn science(
+    AuthUser(user): AuthUser,
+    State(state): State<AppState>,
+) -> AppResult<Html<String>> {
     let benefits = state.content_service.get_benefits();
     Ok(Html(views::render_science(&user, &benefits)))
+}
+
+/// Page de politique de confidentialite.
+pub async fn privacy(AuthUser(user): AuthUser) -> Html<String> {
+    Html(views::render_privacy(&user))
+}
+
+/// Page de conditions d'utilisation.
+pub async fn terms(AuthUser(user): AuthUser) -> Html<String> {
+    Html(views::render_terms(&user))
 }
 
 /// Handler pour les routes non trouvées (404).

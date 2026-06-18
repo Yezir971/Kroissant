@@ -1,13 +1,13 @@
 //! Handlers pour la bibliothèque de contenus.
+use crate::app_state::AppState;
+use crate::auth::AuthUser;
+use crate::error::AppResult;
+use crate::models::PlatformQuery;
+use crate::views;
 use axum::{
     extract::{Query, State},
     response::Html,
 };
-use crate::app_state::AppState;
-use crate::error::AppResult;
-use crate::models::PlatformQuery;
-use crate::auth::AuthUser;
-use crate::views;
 
 /// Page de la bibliothèque complète.
 pub async fn library(
@@ -27,9 +27,5 @@ pub async fn library_partial(
 ) -> AppResult<Html<String>> {
     let tags = state.content_repo.available_tags().await?;
     let series = state.content_repo.tagged_series(&query).await?;
-    Ok(Html(views::render_library_section(
-        &query,
-        &tags,
-        &series,
-    )))
+    Ok(Html(views::render_library_section(&query, &tags, &series)))
 }

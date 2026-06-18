@@ -1,6 +1,6 @@
 //! Page de la bibliotheque.
 use crate::models::{TaggedSeries, User};
-use crate::views::components::{render_library_section, render_search_and_filters};
+use crate::views::components::render_library_section;
 use crate::views::layout::render_page;
 
 pub fn render_library(
@@ -13,7 +13,6 @@ pub fn render_library(
         r#"
         <main class="library-shell">
             <section class="library-visual" aria-label="Bibliotheque Ploopy">
-                {}
                 <div class="library-carousel" aria-hidden="true">
                     <div class="library-carousel-track">
                         <picture class="library-carousel-slide">
@@ -40,15 +39,8 @@ pub fn render_library(
             </section>
         </main>
         "#,
-        render_search_and_filters(query, tags),
         render_library_section(query, tags, series)
     );
 
-    render_page(
-        "Bibliotheque - Ploopy",
-        "Accueil",
-        Some("/"),
-        user,
-        body,
-    )
+    render_page("Bibliotheque - Ploopy", "Accueil", Some("/"), user, body)
 }

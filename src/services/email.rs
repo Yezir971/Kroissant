@@ -1,10 +1,10 @@
 //! Service pour l'envoi d'emails de vérification.
-use async_trait::async_trait;
 use crate::error::{AppError, AppResult};
 use crate::repositories::EmailVerificationRepository;
 use crate::views::email::{verification, verification_plain};
+use async_trait::async_trait;
 use chrono::{Duration, Utc};
-use lettre::message::{MultiPart};
+use lettre::message::MultiPart;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use std::env;
@@ -41,7 +41,8 @@ impl EmailService for EmailServiceImpl {
 
         // 2. Préparer l'email
         let app_url = env::var("APP_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let from_email = env::var("FROM_EMAIL").unwrap_or_else(|_| "noreply@kroissant.fr".to_string());
+        let from_email =
+            env::var("FROM_EMAIL").unwrap_or_else(|_| "noreply@kroissant.fr".to_string());
         let verify_url = format!("{}/inscription/verify?token={}", app_url, token);
 
         let smtp_host = env::var("SMTP_HOST").map_err(|_| {
@@ -52,22 +53,30 @@ impl EmailService for EmailServiceImpl {
             .unwrap_or_else(|_| "2525".to_string())
             .parse::<u16>()
             .map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_PORT invalide")))?;
-        let smtp_user = env::var("SMTP_USER").map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_USER non défini")))?;
-        let smtp_pass = env::var("SMTP_PASSWORD").map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_PASSWORD non défini")))?;
+        let smtp_user = env::var("SMTP_USER")
+            .map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_USER non défini")))?;
+        let smtp_pass = env::var("SMTP_PASSWORD")
+            .map_err(|_| AppError::Internal(anyhow::anyhow!("SMTP_PASSWORD non défini")))?;
 
         let html_body = verification::render(&verify_url);
         let plain_body = verification_plain::render(&verify_url);
 
         let email_msg = Message::builder()
-            .from(from_email.parse().map_err(|_| AppError::Internal(anyhow::anyhow!("FROM_EMAIL parse error")))?)
-            .to(email.parse().map_err(|_| AppError::Internal(anyhow::anyhow!("To email parse error")))?)
+            .from(
+                from_email
+                    .parse()
+                    .map_err(|_| AppError::Internal(anyhow::anyhow!("FROM_EMAIL parse error")))?,
+            )
+            .to(email
+                .parse()
+                .map_err(|_| AppError::Internal(anyhow::anyhow!("To email parse error")))?)
             .subject("Verification de votre compte - Kroissant")
             .multipart(MultiPart::alternative_plain_html(plain_body, html_body))
             .map_err(|e| AppError::Internal(anyhow::anyhow!("Message build error: {}", e)))?;
 
         // 3. Envoyer via SMTP
         let creds = Credentials::new(smtp_user, smtp_pass);
-        
+
         let mailer = SmtpTransport::relay(&smtp_host)
             .map_err(|e| AppError::Internal(anyhow::anyhow!("Erreur relay SMTP: {}", e)))?
             .port(smtp_port)
@@ -77,7 +86,10 @@ impl EmailService for EmailServiceImpl {
 
         if let Err(e) = mailer.send(&email_msg) {
             tracing::error!("ÉCHEC de l'envoi d'email SMTP: {:?}", e);
-            return Err(AppError::Internal(anyhow::anyhow!("Erreur envoi email: {}", e)));
+            return Err(AppError::Internal(anyhow::anyhow!(
+                "Erreur envoi email: {}",
+                e
+            )));
         }
 
         tracing::info!("Email de vérification envoyé avec succès à {}", email);

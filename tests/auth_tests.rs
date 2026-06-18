@@ -1,13 +1,13 @@
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use kroissant::{
     AppState,
-    routes::create_router,
-    repositories::{SqliteContentRepository, SqliteUserRepository},
-    services::{AuthServiceImpl, ContentServiceImpl},
     auth::AUTH_COOKIE,
+    repositories::{SqliteContentRepository, SqliteUserRepository},
+    routes::create_router,
+    services::{AuthServiceImpl, ContentServiceImpl},
 };
 use std::sync::Arc;
 use tower::ServiceExt; // for `oneshot` and `ready`
@@ -21,7 +21,10 @@ async fn setup_app() -> axum::Router {
 
     let jwt_secret = "test-secret".to_string();
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_secret.clone()));
-    let content_service = Arc::new(ContentServiceImpl::new(content_repo.clone(), user_repo.clone()));
+    let content_service = Arc::new(ContentServiceImpl::new(
+        content_repo.clone(),
+        user_repo.clone(),
+    ));
 
     let state = AppState::new(
         pool,
@@ -40,20 +43,28 @@ async fn test_register_login_flow() {
     let app = setup_app().await;
 
     // 1. Register
-    let response = app.clone()
+    let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
                 .uri("/inscription")
                 .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-                .body(Body::from("email=test@example.com&password=password123&next=/"))
+                .body(Body::from(
+                    "email=test@example.com&password=password123&next=/",
+                ))
                 .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    let cookie = response.headers().get(header::SET_COOKIE).unwrap().to_str().unwrap();
+    let cookie = response
+        .headers()
+        .get(header::SET_COOKIE)
+        .unwrap()
+        .to_str()
+        .unwrap();
     assert!(cookie.contains(AUTH_COOKIE));
 
     // 2. Login
@@ -63,14 +74,21 @@ async fn test_register_login_flow() {
                 .method("POST")
                 .uri("/connexion")
                 .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-                .body(Body::from("email=test@example.com&password=password123&next=/"))
+                .body(Body::from(
+                    "email=test@example.com&password=password123&next=/",
+                ))
                 .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    let cookie = response.headers().get(header::SET_COOKIE).unwrap().to_str().unwrap();
+    let cookie = response
+        .headers()
+        .get(header::SET_COOKIE)
+        .unwrap()
+        .to_str()
+        .unwrap();
     assert!(cookie.contains(AUTH_COOKIE));
 }
 
@@ -98,7 +116,8 @@ async fn test_account_requires_auth() {
     let app = setup_app().await;
 
     // Without auth
-    let response = app.clone()
+    let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("GET")

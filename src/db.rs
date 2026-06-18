@@ -1,8 +1,6 @@
 //! Initialisation et migrations de la base de données.
-use anyhow::{Result};
-use sqlx::{
-    SqlitePool,
-};
+use anyhow::Result;
+use sqlx::SqlitePool;
 
 /// Exécute les migrations initiales.
 pub async fn migrate(pool: &SqlitePool) -> Result<()> {

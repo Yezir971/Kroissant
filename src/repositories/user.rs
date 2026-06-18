@@ -33,14 +33,15 @@ impl SqliteUserRepository {
 #[async_trait]
 impl UserRepository for SqliteUserRepository {
     async fn create_user(&self, email: &str, password_hash: &str, pseudo: &str) -> AppResult<i64> {
-        let result =
-            sqlx::query("INSERT INTO users (email, password_hash, pseudo, created_at) VALUES (?, ?, ?, ?)")
-                .bind(email)
-                .bind(password_hash)
-                .bind(pseudo)
-                .bind(Utc::now().to_rfc3339())
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(
+            "INSERT INTO users (email, password_hash, pseudo, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind(email)
+        .bind(password_hash)
+        .bind(pseudo)
+        .bind(Utc::now().to_rfc3339())
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.last_insert_rowid())
     }

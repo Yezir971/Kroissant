@@ -16,7 +16,10 @@ pub trait ContentRepository: Send + Sync {
     async fn get_similar(&self, content: &Content) -> AppResult<Vec<Content>>;
 
     async fn available_tags(&self) -> AppResult<Vec<String>>;
-    async fn tagged_series(&self, query: &crate::models::PlatformQuery) -> AppResult<Vec<TaggedSeries>>;
+    async fn tagged_series(
+        &self,
+        query: &crate::models::PlatformQuery,
+    ) -> AppResult<Vec<TaggedSeries>>;
 }
 
 pub struct SqliteContentRepository {
@@ -122,7 +125,10 @@ impl ContentRepository for SqliteContentRepository {
         Ok(rows.into_iter().map(|row| row.0).collect())
     }
 
-    async fn tagged_series(&self, query: &crate::models::PlatformQuery) -> AppResult<Vec<TaggedSeries>> {
+    async fn tagged_series(
+        &self,
+        query: &crate::models::PlatformQuery,
+    ) -> AppResult<Vec<TaggedSeries>> {
         let mut query_builder: sqlx::QueryBuilder<sqlx::Sqlite> = sqlx::QueryBuilder::new(
             r#"
             SELECT
@@ -144,7 +150,7 @@ impl ContentRepository for SqliteContentRepository {
             LEFT JOIN tmdb_series_tags st ON st.series_id = s.id
             LEFT JOIN tags t ON t.id = st.tag_id
             LEFT JOIN tmdb_episodes e ON e.series_id = s.id AND e.runtime IS NOT NULL
-            "#
+            "#,
         );
 
         query_builder.push(" WHERE 1=1 ");

@@ -102,7 +102,11 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
     let active_skill = query.skill.as_deref().unwrap_or("all");
 
     let mut age_filters = String::new();
-    for (val, label) in [("all", "Tout"), ("3-7 ans", "3-7 ans"), ("7-10 ans", "7-10 ans")] {
+    for (val, label) in [
+        ("all", "Tout"),
+        ("3-7 ans", "3-7 ans"),
+        ("7-10 ans", "7-10 ans"),
+    ] {
         age_filters.push_str(&format!(
             r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('age', '{}')">{}</button>"#,
             if active_age == val { "active" } else { "" },
@@ -126,7 +130,12 @@ pub fn render_search_and_filters(query: &crate::models::PlatformQuery, tags: &[S
     }
 
     let mut platform_filters = String::new();
-    for (val, label) in [("all", "Tout"), ("youtube", "Youtube"), ("netflix", "Netflix"), ("disney", "Disney +")] {
+    for (val, label) in [
+        ("all", "Tout"),
+        ("youtube", "Youtube"),
+        ("netflix", "Netflix"),
+        ("disney", "Disney +"),
+    ] {
         platform_filters.push_str(&format!(
             r#"<button type="button" class="filter-chip {}" onclick="setLibraryFilter('platform', '{}')">{}</button>"#,
             if active_platform == val { "active" } else { "" },
@@ -440,5 +449,3 @@ pub fn render_save_panel(content: &Content, user: Option<&User>, saved: bool) ->
         ),
     }
 }
-
-

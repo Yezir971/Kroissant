@@ -66,8 +66,8 @@ pub fn render(error: Option<&str>) -> String {
             </form>
 
             <div style="text-align: center; font-size: 12px; color: #888; line-height: 1.4;">
-                En utilisant Kroissant, vous acceptez les <a href="#" style="color: var(--brand); text-decoration: underline;">Conditions d'utilisation</a>
-                et la <a href="#" style="color: var(--brand); text-decoration: underline;">Politique de confidentialité</a>.
+                En utilisant Kroissant, vous acceptez les <a href="/conditions-utilisation" target="_blank" rel="noopener" style="color: var(--brand); text-decoration: underline;">Conditions d'utilisation</a>
+                et la <a href="/politique-de-confidentialite" target="_blank" rel="noopener" style="color: var(--brand); text-decoration: underline;">Politique de confidentialité</a>.
             </div>
         </div>
         "##,

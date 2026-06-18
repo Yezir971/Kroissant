@@ -19,7 +19,8 @@ pub fn render_auth_page(
         );
     }
 
-    let (page_title, title, subtitle, action, primary, secondary_href, secondary_text) = match mode {
+    let (page_title, title, subtitle, action, primary, secondary_href, secondary_text) = match mode
+    {
         AuthMode::Register => (
             "Inscription - Ploopy",
             "Bonjour, <br> Bienvenue !",
@@ -113,7 +114,7 @@ pub fn render_auth_page(
             }}
         </script>
         "##,
-        title, 
+        title,
         subtitle_html,
         error_html,
         action,
