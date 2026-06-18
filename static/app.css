@@ -215,8 +215,10 @@ input {
 }
 
 .hero-copy {
-  min-width: 0;
-  color: var(--dark-brown);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 }
 
 .hero-illustration {
