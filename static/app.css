@@ -484,6 +484,31 @@ input {
   font-size: 1rem;
 }
 
+.footer-cta {
+  background: #FF6B4A;
+  color: white;
+  padding: 80px 5vw;
+  text-align: center;
+}
+
+.footer-cta-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.footer-cta h2 {
+  font-family: var(--font-title);
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  line-height: 1.1;
+}
+
+.footer-cta p {
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  opacity: 0.9;
+}
+
 .stat-band span {
   display: inline-flex;
   align-items: center;

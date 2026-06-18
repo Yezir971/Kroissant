@@ -78,9 +78,12 @@ dessins animes adaptes a votre enfant.</h1>
             </section>
         </main>
 
-        <section class="stat-band">
-            <span>98% des enfants 4-14 ans regardent des dessins animes</span>
-            <span>Certains developpent autant que des activites structurees</span>
+        <section class="footer-cta">
+            <div class="footer-cta-inner">
+                <h2>Offrez à votre enfant des écrans qui le font grandir.</h2>
+                <p>Créez votre compte gratuit et retrouvez vos contenus favoris à chaque visite.</p>
+                <a class="button button-light" href="/inscription">Je découvre et m'inscris</a>
+            </div>
         </section>
 
         "#,
